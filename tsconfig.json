@@ -6,8 +6,13 @@
     "target": "es5",
     "sourceMap": true,
     "noImplicitAny": true,
+    "noImplicitThis": true,
     "strictNullChecks": true,
-    "alwaysStrict": true
+    "alwaysStrict": true,
+    "noImplicitReturns": true,
+    "lib": [
+      "es6"
+    ]
   },
   "exclude": [
     "node_modules"

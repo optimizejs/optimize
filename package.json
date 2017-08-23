@@ -7,6 +7,7 @@
     "recast": "0.12.6"
   },
   "devDependencies": {
+    "@types/estree": "0.0.37",
     "gulp": "3.9.1",
     "gulp-clean": "0.3.2",
     "gulp-istanbul": "1.1.2",

@@ -4,11 +4,29 @@
     "tslint:recommended"
   ],
   "rules": {
+    "array-type": false,
+    "interface-name": [
+      true,
+      "never-prefix"
+    ],
+    "max-classes-per-file": [false],
+    "member-access": [
+      true,
+      "no-public"
+    ],
     "quotemark": [
       true,
       "single",
       "avoid-escape",
       "avoid-template"
+    ],
+    "trailing-comma": [
+      false
+    ],
+    "typedef": [
+      true,
+      "call-signature",
+      "property-declaration"
     ]
   }
 }
