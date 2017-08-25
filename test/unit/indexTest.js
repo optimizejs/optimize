@@ -3,6 +3,6 @@ var assert = require('assert');
 
 describe('Optimize test', function () {
     it('optimize source', function () {
-        assert.strictEqual(optimizeSource('src'), 'src');
+        assert.strictEqual(optimizeSource('4.0;'), '4;');
     });
 });

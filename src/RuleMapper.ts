@@ -1,12 +1,14 @@
 import {Node} from 'estree';
-import {ExpressionStatement} from './semantic/nodes/ExpressionStatement';
+import {createExpressionStatement, ExpressionStatement} from './semantic/nodes/ExpressionStatement';
 import {IfStatement} from './semantic/nodes/IfStatement';
-import {Literal} from './semantic/nodes/Literal';
-import {Program} from './semantic/nodes/Program';
+import {createLiteral, Literal} from './semantic/nodes/Literal';
+import {createProgram, Program} from './semantic/nodes/Program';
 import {ThrowStatement} from './semantic/nodes/ThrowStatement';
 import {RuleFunction} from './semantic/rules/RuleStatements';
 
 type RuleMapping = (node: Node) => RuleFunction;
+
+type BackMapper = (rule: RuleFunction) => Node | null;
 
 const ruleMap: { [type: string]: RuleMapping } = {
     ExpressionStatement,
@@ -16,16 +18,22 @@ const ruleMap: { [type: string]: RuleMapping } = {
     ThrowStatement
 };
 
-export class RuleMapper {
-    private map: Map<RuleFunction, Node> = new Map<RuleFunction, Node>();
+const backMap: BackMapper[] = [
+    createExpressionStatement,
+    createLiteral,
+    createProgram
+];
 
-    toRule(node: Node): RuleFunction {
-        const rule = ruleMap[node.type](node);
-        this.map.set(rule, node);
-        return rule;
-    }
+export function toRule(node: Node): RuleFunction {
+    return ruleMap[node.type](node);
+}
 
-    toNode(rule: RuleFunction): Node {
-        return this.map.get(rule) as Node;
+export function toNode(rule: RuleFunction): Node {
+    for (const mapper of backMap) {
+        const result = mapper(rule);
+        if (result !== null) {
+            return result;
+        }
     }
+    throw new Error('No mapping found!');
 }

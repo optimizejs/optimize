@@ -17,13 +17,13 @@ export class RuleBlockStatement extends RuleStatement {
 }
 
 export class RuleLetStatement extends RuleStatement {
-    constructor(private variableName: string, private expression: RuleExpression<any>) {
+    constructor(private variableName: string, readonly expression: RuleExpression<any>) {
         super();
     }
 }
 
 export class RuleReturn extends RuleStatement {
-    constructor(private expression: RuleExpression<CompletionRecord>) {
+    constructor(readonly expression: RuleExpression<CompletionRecord>) {
         super();
     }
 }

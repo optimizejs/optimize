@@ -37,6 +37,13 @@ export class ContinueCompletionRecord extends CompletionRecord {
     }
 }
 
+export class RuleNormalCompletionRecordExpression implements RuleExpression<NormalCompletionRecord> {
+    expression: NormalCompletionRecord;
+
+    constructor(readonly value: RuleExpression<Value>) {
+    }
+}
+
 export function isAbrupt(cr: RuleExpression<CompletionRecord>): RuleExpression<boolean> {
     return unknown();
 }
@@ -46,7 +53,7 @@ export function getNormalValue(cr: RuleExpression<CompletionRecord>): RuleExpres
 }
 
 export function normalCompletion(value: RuleExpression<Value>): RuleExpression<NormalCompletionRecord> {
-    return unknown();
+    return new RuleNormalCompletionRecordExpression(value);
 }
 
 export function throwCompletion(value: RuleExpression<Value>): RuleExpression<ThrowCompletionRecord> {
