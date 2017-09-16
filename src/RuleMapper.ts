@@ -1,5 +1,6 @@
 import {Node} from 'estree';
 import {CompletionRecord} from './semantic/domain/CompletionRecords';
+import {BinaryExpression, createBinaryExpression} from './semantic/nodes/BinaryExpression';
 import {createExpressionStatement, ExpressionStatement} from './semantic/nodes/ExpressionStatement';
 import {IfStatement} from './semantic/nodes/IfStatement';
 import {createLiteral, Literal} from './semantic/nodes/Literal';
@@ -12,6 +13,7 @@ type RuleMapping = (node: Node) => RuleExpression<CompletionRecord>;
 type BackMapper = (rule: RuleExpression<CompletionRecord>) => Node | null;
 
 const ruleMap: { [type: string]: RuleMapping } = {
+    BinaryExpression,
     ExpressionStatement,
     IfStatement,
     Literal,
@@ -20,6 +22,7 @@ const ruleMap: { [type: string]: RuleMapping } = {
 };
 
 const backMap: BackMapper[] = [
+    createBinaryExpression,
     createExpressionStatement,
     createLiteral,
     createProgram
