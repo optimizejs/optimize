@@ -1,14 +1,15 @@
 import {Node} from 'estree';
+import {CompletionRecord} from './semantic/CompletionRecords';
 import {createExpressionStatement, ExpressionStatement} from './semantic/nodes/ExpressionStatement';
 import {IfStatement} from './semantic/nodes/IfStatement';
 import {createLiteral, Literal} from './semantic/nodes/Literal';
 import {createProgram, Program} from './semantic/nodes/Program';
 import {ThrowStatement} from './semantic/nodes/ThrowStatement';
-import {RuleFunction} from './semantic/rules/RuleStatements';
+import {RuleExpression} from './semantic/rules/RuleExpression';
 
-type RuleMapping = (node: Node) => RuleFunction;
+type RuleMapping = (node: Node) => RuleExpression<CompletionRecord>;
 
-type BackMapper = (rule: RuleFunction) => Node | null;
+type BackMapper = (rule: RuleExpression<CompletionRecord>) => Node | null;
 
 const ruleMap: { [type: string]: RuleMapping } = {
     ExpressionStatement,
@@ -24,11 +25,11 @@ const backMap: BackMapper[] = [
     createProgram
 ];
 
-export function toRule(node: Node): RuleFunction {
+export function toRule(node: Node): RuleExpression<CompletionRecord> {
     return ruleMap[node.type](node);
 }
 
-export function toNode(rule: RuleFunction): Node {
+export function toNode(rule: RuleExpression<CompletionRecord>): Node {
     for (const mapper of backMap) {
         const result = mapper(rule);
         if (result !== null) {

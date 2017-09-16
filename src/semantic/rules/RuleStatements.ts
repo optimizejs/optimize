@@ -17,7 +17,7 @@ export class RuleBlockStatement extends RuleStatement {
 }
 
 export class RuleLetStatement extends RuleStatement {
-    constructor(private variableName: string, readonly expression: RuleExpression<any>) {
+    constructor(readonly variableName: string, readonly expression: RuleExpression<any>) {
         super();
     }
 }

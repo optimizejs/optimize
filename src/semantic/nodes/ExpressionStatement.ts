@@ -1,23 +1,22 @@
 import {Expression, ExpressionStatement} from 'estree';
 import {types} from 'recast';
 import {toNode, toRule} from '../../RuleMapper';
-import {call, RuleCallExpression} from '../rules/Basic';
-import {RuleFunction, RuleReturn} from '../rules/RuleStatements';
+import {CompletionRecord} from '../CompletionRecords';
+import {RuleCallExpression} from '../rules/Basic';
+import {GET_VALUE, getValue} from '../rules/Others';
+import {RuleExpression} from '../rules/RuleExpression';
 
-export function ExpressionStatement(node: ExpressionStatement): RuleFunction {
-    return new RuleFunction([], [
-        new RuleReturn(call(toRule(node.expression), []))
-    ]);
+export function ExpressionStatement(node: ExpressionStatement): RuleExpression<CompletionRecord> {
+    return getValue(toRule(node.expression));
 }
 
-export function createExpressionStatement(rule: RuleFunction): ExpressionStatement | null {
-    if (rule.body.length !== 1) {
+export function createExpressionStatement(rule: RuleExpression<CompletionRecord>): ExpressionStatement | null {
+    if (!(rule instanceof RuleCallExpression) || rule.parameters.length !== 1) {
         return null;
     }
-    const ret = rule.body[0];
-
-    if (ret instanceof RuleReturn && ret.expression instanceof RuleCallExpression) {
-        return types.builders.expressionStatement(toNode(ret.expression.fn) as Expression);
+    if (rule.fn !== GET_VALUE) {
+        return null;
     }
-    return null;
+
+    return types.builders.expressionStatement(toNode(rule.parameters[0]) as Expression);
 }
