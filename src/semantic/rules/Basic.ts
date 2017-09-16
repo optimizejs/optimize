@@ -1,7 +1,14 @@
-import {CompletionRecord} from '../CompletionRecords';
+import {CompletionRecord} from '../domain/CompletionRecords';
 import {unknown} from './Helper';
 import {RuleExpression} from './RuleExpression';
 import {RuleFunction} from './RuleStatements';
+
+export class RuleConstantExpression<T> implements RuleExpression<T> {
+    expression: T;
+
+    constructor(readonly value: T) {
+    }
+}
 
 export class RuleCallExpression implements RuleExpression<CompletionRecord> {
     expression: CompletionRecord;
@@ -20,4 +27,8 @@ export function readVariable(name: string): RuleExpression<any> {
 
 export function isSame<T>(a: RuleExpression<T>, b: RuleExpression<T>): RuleExpression<boolean> {
     throw new Error('not implemented yet');
+}
+
+export function constant<T>(value: T): RuleExpression<T> {
+    return new RuleConstantExpression(value);
 }

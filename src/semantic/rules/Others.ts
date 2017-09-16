@@ -1,19 +1,19 @@
-import {CompletionRecord, normalCompletion, throwCompletion} from '../CompletionRecords';
-import {getBindingValue} from '../EnvironmentRecord';
-import {isPrimitive} from '../values/PrimitiveValue';
+import {CompletionRecord, normalCompletion, returnIfAbrupt, throwCompletion} from '../domain/CompletionRecords';
+import {getBindingValue} from '../domain/EnvironmentRecord';
+import {toObject} from '../domain/js/JSValue';
+import {callGet} from '../domain/js/ObjectValue';
+import {isPrimitive} from '../domain/js/PrimitiveValue';
 import {
-    callGet,
     getBase,
     getReferencedName,
     getThisValue,
     isPropertyReference,
+    isReference,
     isStrictReference,
-    isUnresolvable,
-} from '../values/ReferenceValue';
-import {isReference, toObject} from '../values/Value';
+    isUnresolvable
+} from '../domain/Reference';
 import {call, readVariable} from './Basic';
 import {referenceError} from './BuiltIn';
-import {returnIfAbrupt} from './Helper';
 import {RuleExpression} from './RuleExpression';
 import {
     RuleBlockStatement,

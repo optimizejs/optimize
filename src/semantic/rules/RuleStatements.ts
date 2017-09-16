@@ -1,4 +1,4 @@
-import {CompletionRecord} from '../CompletionRecords';
+import {CompletionRecord} from '../domain/CompletionRecords';
 import {RuleExpression} from './RuleExpression';
 
 export class RuleFunction {

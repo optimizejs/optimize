@@ -1,7 +1,7 @@
 import {Program, Statement} from 'estree';
 import {types} from 'recast';
 import {toNode, toRule} from '../../RuleMapper';
-import {CompletionRecord} from '../CompletionRecords';
+import {CompletionRecord} from '../domain/CompletionRecords';
 import {call, RuleCallExpression} from '../rules/Basic';
 import {RuleExpression} from '../rules/RuleExpression';
 import {RuleFunction, RuleLetStatement, RuleStatement} from '../rules/RuleStatements';

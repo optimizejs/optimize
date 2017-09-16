@@ -1,5 +1,5 @@
 import {Node} from 'estree';
-import {CompletionRecord} from './semantic/CompletionRecords';
+import {CompletionRecord} from './semantic/domain/CompletionRecords';
 import {createExpressionStatement, ExpressionStatement} from './semantic/nodes/ExpressionStatement';
 import {IfStatement} from './semantic/nodes/IfStatement';
 import {createLiteral, Literal} from './semantic/nodes/Literal';

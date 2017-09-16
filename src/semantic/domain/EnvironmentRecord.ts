@@ -1,6 +1,6 @@
+import {unknown} from '../rules/Helper';
+import {RuleExpression} from '../rules/RuleExpression';
 import {CompletionRecord} from './CompletionRecords';
-import {unknown} from './rules/Helper';
-import {RuleExpression} from './rules/RuleExpression';
 
 export abstract class EnvironmentRecord {
     env: true;

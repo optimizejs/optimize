@@ -1,8 +1,7 @@
 import {ThrowStatement} from 'estree';
 import {toRule} from '../../RuleMapper';
-import {CompletionRecord, throwCompletion} from '../CompletionRecords';
+import {CompletionRecord, returnIfAbrupt, throwCompletion} from '../domain/CompletionRecords';
 import {call, readVariable} from '../rules/Basic';
-import {returnIfAbrupt} from '../rules/Helper';
 import {getValue} from '../rules/Others';
 import {RuleExpression} from '../rules/RuleExpression';
 import {RuleFunction, RuleLetStatement, RuleReturn} from '../rules/RuleStatements';
