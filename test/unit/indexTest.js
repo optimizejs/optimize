@@ -3,6 +3,6 @@ var assert = require('assert');
 
 describe('Optimize test', function () {
     it('optimize source', function () {
-        assert.strictEqual(optimizeSource('4.0 * 3;'), '4 * 3;');
+        assert.strictEqual(optimizeSource('4.0 * 3;'), '12;');
     });
 });

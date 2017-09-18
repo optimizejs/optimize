@@ -1,8 +1,8 @@
+import {CompletionRecord, NormalCompletionRecord} from '../domain/CompletionRecords';
 import {JSValue} from '../domain/js/JSValue';
-import {ObjectValue} from '../domain/js/ObjectValue';
+import {newObject, ObjectValue} from '../domain/js/ObjectValue';
 import {PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {unknown} from './Helper';
-import {RuleExpression} from './RuleExpression';
+import {RuleExpression, RuleUnaryExpression} from './RuleExpression';
 
 export function regExpCreate(pattern: RuleExpression<PrimitiveValue>,
                              flags: RuleExpression<PrimitiveValue>): RuleExpression<ObjectValue> {
@@ -10,10 +10,16 @@ export function regExpCreate(pattern: RuleExpression<PrimitiveValue>,
     throw new Error('not implemented yet');
 }
 
-export function toNumber(param: RuleExpression<JSValue>): RuleExpression<PrimitiveValue> {
-    return unknown();
+export function toNumber(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
+    return new RuleUnaryExpression(param, arg => {
+        if (arg instanceof PrimitiveValue) {
+            return new NormalCompletionRecord(new PrimitiveValue(+(arg.value as any)));
+        } else {
+            throw new Error('Converting object to primitive');
+        }
+    });
 }
 
 export function referenceError(): RuleExpression<ObjectValue> {
-    return unknown();
+    return newObject();
 }

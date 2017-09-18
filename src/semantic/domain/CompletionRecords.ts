@@ -1,6 +1,5 @@
 import {constant, readVariable} from '../rules/Basic';
-import {unknown} from '../rules/Helper';
-import {RuleExpression} from '../rules/RuleExpression';
+import {RuleExpression, RuleUnaryExpression} from '../rules/RuleExpression';
 import {RuleIfStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../rules/RuleStatements';
 import {JSValue} from './js/JSValue';
 import {Label} from './Label';
@@ -16,7 +15,7 @@ export abstract class CompletionRecord {
 }
 
 export class NormalCompletionRecord extends CompletionRecord {
-    constructor(private value: JSValue) {
+    constructor(readonly value: JSValue | Empty) {
         super();
     }
 }
@@ -45,29 +44,22 @@ export class ContinueCompletionRecord extends CompletionRecord {
     }
 }
 
-export class RuleNormalCompletionRecordExpression implements RuleExpression<NormalCompletionRecord> {
-    expression: NormalCompletionRecord;
-
-    constructor(readonly value: RuleExpression<JSValue | Empty>) {
-    }
-}
-
 export const EMPTY_COMPLETION = normalCompletion(constant(EMPTY));
 
 export function isAbrupt(cr: RuleExpression<CompletionRecord>): RuleExpression<boolean> {
-    return unknown();
+    return new RuleUnaryExpression(cr, arg => !(arg instanceof NormalCompletionRecord));
 }
 
-export function getNormalValue(cr: RuleExpression<CompletionRecord>): RuleExpression<JSValue> {
-    return unknown();
+export function getNormalValue(cr: RuleExpression<CompletionRecord>): RuleExpression<JSValue | Empty> {
+    return new RuleUnaryExpression(cr, arg => (arg as NormalCompletionRecord).value);
 }
 
 export function normalCompletion(value: RuleExpression<JSValue | Empty>): RuleExpression<NormalCompletionRecord> {
-    return new RuleNormalCompletionRecordExpression(value);
+    return new RuleUnaryExpression(value, arg => new NormalCompletionRecord(arg));
 }
 
 export function throwCompletion(value: RuleExpression<JSValue>): RuleExpression<ThrowCompletionRecord> {
-    return unknown();
+    return new RuleUnaryExpression(value, arg => new ThrowCompletionRecord(arg));
 }
 
 export function isEmptyValue(v: RuleExpression<JSValue | Empty>): RuleExpression<boolean> {

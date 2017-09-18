@@ -1,6 +1,6 @@
 import {Program, Statement} from 'estree';
 import {types} from 'recast';
-import {toNode, toRule} from '../../RuleMapper';
+import {toRule, toStatement} from '../../RuleMapper';
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {call, RuleCallExpression} from '../rules/Basic';
 import {RuleExpression} from '../rules/RuleExpression';
@@ -27,7 +27,7 @@ export function createProgram(rule: RuleExpression<CompletionRecord>): Program |
 
     for (const ruleStatement of fn.body) {
         if (ruleStatement instanceof RuleLetStatement && ruleStatement.variableName === 'sl') { // todo
-            statements.push(toNode(ruleStatement.expression) as Statement);
+            statements.push(toStatement(ruleStatement.expression));
         } else {
             return null;
         }

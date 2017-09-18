@@ -1,17 +1,14 @@
 import {BinaryExpression, Expression} from 'estree';
 import {types} from 'recast';
-import {toNode, toRule} from '../../RuleMapper';
-import {
-    CompletionRecord,
-    normalCompletion,
-    returnIfAbrupt,
-    RuleNormalCompletionRecordExpression
-} from '../domain/CompletionRecords';
+import {toExpression, toRule} from '../../RuleMapper';
+import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../domain/CompletionRecords';
 import {PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {call, readVariable, RuleCallExpression} from '../rules/Basic';
+import {call, constant, readVariable, RuleCallExpression, RuleConstantExpression} from '../rules/Basic';
 import {toNumber} from '../rules/BuiltIn';
+import {Evaluation} from '../rules/Evaluation';
+import {Optimized} from '../rules/Optimized';
 import {getValue} from '../rules/Others';
-import {RuleExpression} from '../rules/RuleExpression';
+import {RuleExpression, RuleUnaryExpression} from '../rules/RuleExpression';
 import {RuleFunction, RuleLetStatement, RuleReturn} from '../rules/RuleStatements';
 
 export function BinaryExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
@@ -27,10 +24,31 @@ export function BinaryExpression(node: BinaryExpression): RuleExpression<Complet
 
 class RuleMultiplicativeExpression implements RuleExpression<PrimitiveValue> {
     expression: PrimitiveValue;
+    private evaluator: (a: number, b: number) => number;
 
     constructor(readonly operator: string, readonly left: RuleExpression<PrimitiveValue>,
                 readonly right: RuleExpression<PrimitiveValue>) {
+        // todo cache
+        this.evaluator = new Function('a,b', 'return a ' + operator + ' b;') as (a: number, b: number) => number;
+    }
 
+    execute(evaluation: Evaluation): Optimized<RuleExpression<PrimitiveValue>> {
+        const optimizedLeft = this.left.execute(evaluation);
+        const optimizedRight = this.right.execute(evaluation);
+
+        const left = optimizedLeft.get();
+        const right = optimizedRight.get();
+
+        if (left instanceof RuleConstantExpression && right instanceof RuleConstantExpression) {
+            const lVal = (left.value as PrimitiveValue).value as number;
+            const rVal = (right.value as PrimitiveValue).value as number;
+            return Optimized.optimized(constant(new PrimitiveValue(this.evaluator(lVal, rVal))));
+        }
+        return Optimized.wrapIfOptimized(
+            [optimizedLeft, optimizedRight],
+            this,
+            () => new RuleMultiplicativeExpression(this.operator, left, right)
+        );
     }
 }
 
@@ -62,8 +80,8 @@ export function createBinaryExpression(rule: RuleExpression<CompletionRecord>): 
     }
     // todo
     const ret = fn.body[8];
-    if (ret instanceof RuleReturn && ret.expression instanceof RuleNormalCompletionRecordExpression) {
-        const mul = ret.expression.value;
+    if (ret instanceof RuleReturn && ret.expression instanceof RuleUnaryExpression) {
+        const mul = ret.expression.argument;
         if (mul instanceof RuleMultiplicativeExpression) {
 
             const left = extract(fn.body[0]);
@@ -76,5 +94,5 @@ export function createBinaryExpression(rule: RuleExpression<CompletionRecord>): 
 }
 
 function extract(p: any): Expression {
-    return toNode(((p as RuleLetStatement).expression as RuleCallExpression).parameters[0]) as Expression;
+    return toExpression(((p as RuleLetStatement).expression as RuleCallExpression).parameters[0]);
 }

@@ -1,13 +1,17 @@
 import recast = require('recast');
-import {toNode, toRule} from './RuleMapper';
+import {toProgram, toRule} from './RuleMapper';
+import {Evaluation} from './semantic/rules/Evaluation';
 
 function optimizeSource(src: string): string {
     const node = recast.parse(src);
 
     const rule = toRule(node.program);
-    const newNode = toNode(rule);
+    const optimized = rule.execute(new Evaluation());
+    const newNode = toProgram(optimized.get());
 
-    return recast.print(newNode).code;
+    return recast.print(newNode, {
+        lineTerminator: '\n'
+    }).code;
 }
 
 export = optimizeSource;

@@ -5,6 +5,7 @@
   ],
   "rules": {
     "array-type": false,
+    "arrow-parens": false,
     "interface-name": [
       true,
       "never-prefix"

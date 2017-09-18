@@ -9,6 +9,10 @@ declare module 'recast' {
         code: string;
     }
 
+    interface Options {
+        lineTerminator: string;
+    }
+
     interface Builders {
         binaryExpression(operator: string, left: Expression, right: Expression): BinaryExpression;
 
@@ -22,7 +26,7 @@ declare module 'recast' {
 
     export function parse(code: string): { program: Node };
 
-    export function print(node: Node): PrintResult;
+    export function print(node: Node, options?: Options): PrintResult;
 
     export const types: { builders: Builders };
 }

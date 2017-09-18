@@ -1,4 +1,4 @@
-import {Node} from 'estree';
+import {Expression, Node, Program as IProgram, Statement} from 'estree';
 import {CompletionRecord} from './semantic/domain/CompletionRecords';
 import {BinaryExpression, createBinaryExpression} from './semantic/nodes/BinaryExpression';
 import {createExpressionStatement, ExpressionStatement} from './semantic/nodes/ExpressionStatement';
@@ -10,7 +10,7 @@ import {RuleExpression} from './semantic/rules/RuleExpression';
 
 type RuleMapping = (node: Node) => RuleExpression<CompletionRecord>;
 
-type BackMapper = (rule: RuleExpression<CompletionRecord>) => Node | null;
+type BackMapper<T extends Node> = (rule: RuleExpression<CompletionRecord>) => T | null;
 
 const ruleMap: { [type: string]: RuleMapping } = {
     BinaryExpression,
@@ -21,10 +21,16 @@ const ruleMap: { [type: string]: RuleMapping } = {
     ThrowStatement
 };
 
-const backMap: BackMapper[] = [
+const expressionMap: BackMapper<Expression>[] = [
     createBinaryExpression,
-    createExpressionStatement,
-    createLiteral,
+    createLiteral
+];
+
+const statementMap: BackMapper<Statement>[] = [
+    createExpressionStatement
+];
+
+const programMap: BackMapper<IProgram>[] = [
     createProgram
 ];
 
@@ -32,8 +38,20 @@ export function toRule(node: Node): RuleExpression<CompletionRecord> {
     return ruleMap[node.type](node);
 }
 
-export function toNode(rule: RuleExpression<CompletionRecord>): Node {
-    for (const mapper of backMap) {
+export function toExpression(rule: RuleExpression<CompletionRecord>): Expression {
+    return toNode(rule, expressionMap);
+}
+
+export function toStatement(rule: RuleExpression<CompletionRecord>): Statement {
+    return toNode(rule, statementMap);
+}
+
+export function toProgram(rule: RuleExpression<CompletionRecord>): IProgram {
+    return toNode(rule, programMap);
+}
+
+function toNode<T extends Node>(rule: RuleExpression<CompletionRecord>, map: BackMapper<T>[]): T {
+    for (const mapper of map) {
         const result = mapper(rule);
         if (result !== null) {
             return result;

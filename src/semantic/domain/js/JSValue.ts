@@ -1,5 +1,4 @@
-import {unknown} from '../../rules/Helper';
-import {RuleExpression} from '../../rules/RuleExpression';
+import {RuleExpression, RuleUnaryExpression} from '../../rules/RuleExpression';
 import {ObjectValue} from './ObjectValue';
 
 export class JSValue {
@@ -7,5 +6,7 @@ export class JSValue {
 }
 
 export function toObject(value: RuleExpression<JSValue>): RuleExpression<ObjectValue> {
-    return unknown();
+    return new RuleUnaryExpression(value, () => {
+        throw new Error('Not implemented!');
+    });
 }
