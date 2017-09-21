@@ -9,8 +9,9 @@ function optimizeSource(src: string): string {
     const optimized = rule.execute(new Evaluation());
     const newNode = toProgram(optimized.get());
 
+    const crlf = src[src.indexOf('\n') - 1] === '\r';
     return recast.print(newNode, {
-        lineTerminator: '\n'
+        lineTerminator: crlf ? '\r\n' : '\n'
     }).code;
 }
 
