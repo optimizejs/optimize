@@ -20,6 +20,27 @@ export function toNumber(param: RuleExpression<JSValue>): RuleExpression<Complet
     });
 }
 
+export function toPrimitive(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
+    return new RuleUnaryExpression(param, arg => {
+        if (arg instanceof PrimitiveValue) {
+            return new NormalCompletionRecord(arg);
+        } else {
+            throw new Error('Converting object to primitive');
+        }
+    });
+}
+
+export function toString(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
+    return new RuleUnaryExpression(param, arg => {
+        if (arg instanceof PrimitiveValue) {
+            return new NormalCompletionRecord(new PrimitiveValue('' + (arg.value as any)));
+        } else {
+            throw new Error('Converting object to primitive');
+        }
+    });
+
+}
+
 export function referenceError(): RuleExpression<ObjectValue> {
     return newObject();
 }

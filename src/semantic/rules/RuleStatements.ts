@@ -5,6 +5,20 @@ import {Executable} from './Executable';
 import {Optimized} from './Optimized';
 import {RuleExpression} from './RuleExpression';
 
+function flattenOptimize(evaluation: Evaluation, statements: RuleStatement[]): Optimized<RuleStatement>[] {
+    const result: Optimized<RuleStatement>[] = [];
+    for (const statement of statements) {
+        const optimized = statement.execute(evaluation);
+        const newStatement = optimized.get();
+        if (newStatement instanceof RuleBlockStatement) {
+            result.push(...newStatement.body.map(st => Optimized.optimized(st)));
+        } else {
+            result.push(optimized);
+        }
+    }
+    return result;
+}
+
 export class RuleFunction {
     constructor(private paramNames: string[], readonly body: RuleStatement[]) {
     }
@@ -18,7 +32,7 @@ export class RuleFunction {
             }
         }
 
-        const statements = this.body.map(statement => statement.execute(evaluation));
+        const statements = flattenOptimize(evaluation, this.body);
 
         return Optimized.wrapIfOptimized(
             statements,
@@ -35,12 +49,12 @@ export abstract class RuleStatement implements Executable<RuleStatement> {
 }
 
 export class RuleBlockStatement extends RuleStatement {
-    constructor(private body: RuleStatement[]) {
+    constructor(readonly body: RuleStatement[]) {
         super();
     }
 
     execute(evaluation: Evaluation): Optimized<RuleStatement> {
-        const body = this.body.map(statement => statement.execute(evaluation));
+        const body = flattenOptimize(evaluation, this.body);
         return Optimized.wrapIfOptimized(body, this, () => new RuleBlockStatement(body.map(s => s.get())));
         // todo optimize single
     }

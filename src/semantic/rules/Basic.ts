@@ -1,7 +1,7 @@
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {Evaluation} from './Evaluation';
 import {Optimized} from './Optimized';
-import {RuleExpression} from './RuleExpression';
+import {RuleBinaryExpression, RuleExpression} from './RuleExpression';
 import {RuleFunction, RuleReturn} from './RuleStatements';
 
 export class RuleConstantExpression<T> implements RuleExpression<T> {
@@ -63,8 +63,8 @@ export function readVariable(variable: string): RuleExpression<any> {
     return new RuleReadVariableExpression(variable);
 }
 
-export function isSame<T>(a: RuleExpression<T>, b: RuleExpression<T>): RuleExpression<boolean> {
-    throw new Error('not implemented yet');
+export function or(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
+    return new RuleBinaryExpression(expr1, expr2, (a, r) => a || r);
 }
 
 export function constant<T>(value: T): RuleExpression<T> {

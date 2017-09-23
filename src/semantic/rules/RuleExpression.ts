@@ -22,3 +22,26 @@ export class RuleUnaryExpression<A, T> implements RuleExpression<T> {
         return optimizedArg.wrapIfOptimized(this, arg => new RuleUnaryExpression(arg, this.calculate));
     }
 }
+
+export class RuleBinaryExpression<L, R, T> implements RuleExpression<T> {
+    expression: T;
+
+    constructor(readonly left: RuleExpression<L>, readonly right: RuleExpression<R>,
+                private calculate: (left: L, right: R) => T) {
+    }
+
+    execute(evaluation: Evaluation): Optimized<RuleExpression<T>> {
+        const optimizedLeft = this.left.execute(evaluation);
+        const optimizedRight = this.right.execute(evaluation);
+        const left = optimizedLeft.get();
+        const right = optimizedRight.get();
+        if (left instanceof RuleConstantExpression && right instanceof RuleConstantExpression) {
+            return Optimized.optimized(constant(this.calculate(left.value as L, right.value as R)));
+        }
+        return Optimized.wrapIfOptimized(
+            [optimizedLeft, optimizedRight],
+            this,
+            () => new RuleBinaryExpression(left, right, this.calculate)
+        );
+    }
+}

@@ -2,10 +2,14 @@ import {Evaluation} from '../../rules/Evaluation';
 import {Optimized} from '../../rules/Optimized';
 import {RuleExpression} from '../../rules/RuleExpression';
 import {CompletionRecord} from '../CompletionRecords';
-import {JSValue} from './JSValue';
+import {JSValue, Type} from './JSValue';
 
 export class ObjectValue extends JSValue {
     objectValue: true;
+
+    getType(): Type {
+        return Type.OBJECT;
+    }
 }
 
 class RuleNewObjectExpression implements RuleExpression<ObjectValue> {

@@ -1,9 +1,27 @@
 import {RuleExpression, RuleUnaryExpression} from '../../rules/RuleExpression';
-import {JSValue} from './JSValue';
+import {JSValue, Type} from './JSValue';
 
 export class PrimitiveValue extends JSValue {
     constructor(readonly value: primitive) {
         super();
+    }
+
+    getType(): Type {
+        switch (typeof this.value) {
+            case 'undefined':
+                return Type.UNDEFINED;
+            case 'object':
+                return Type.NULL;
+            case 'boolean':
+                return Type.BOOLEAN;
+            case 'string':
+                return Type.STRING;
+            case 'symbol':
+                return Type.SYMBOL;
+            case 'number':
+                return Type.NUMBER;
+        }
+        throw new Error('Unknown type');
     }
 }
 
