@@ -64,7 +64,15 @@ export function readVariable(variable: string): RuleExpression<any> {
 }
 
 export function or(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
-    return new RuleBinaryExpression(expr1, expr2, (a, r) => a || r);
+    return new RuleBinaryExpression(expr1, expr2, (a, b) => a || b);
+}
+
+export function and(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
+    return new RuleBinaryExpression(expr1, expr2, (a, b) => a && b);
+}
+
+export function same<T>(x: RuleExpression<T>, y: RuleExpression<T>): RuleExpression<boolean> {
+    return new RuleBinaryExpression(x, y, (l, r) => l === r);
 }
 
 export function constant<T>(value: T): RuleExpression<T> {

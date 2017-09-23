@@ -2,13 +2,20 @@ import {BinaryExpression, Expression} from 'estree';
 import {types} from 'recast';
 import {toExpression, toRule} from '../../RuleMapper';
 import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../domain/CompletionRecords';
-import {isType, Type} from '../domain/js/JSValue';
+import {getType, Type} from '../domain/js/JSValue';
 import {PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {call, or, readVariable, RuleCallExpression} from '../rules/Basic';
+import {call, constant, or, readVariable, RuleCallExpression, same} from '../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../rules/BuiltIn';
-import {getValue} from '../rules/Others';
+import {equals, getValue, strictEquals} from '../rules/Others';
 import {RuleBinaryExpression, RuleExpression, RuleUnaryExpression} from '../rules/RuleExpression';
-import {RuleBlockStatement, RuleFunction, RuleIfStatement, RuleLetStatement, RuleReturn} from '../rules/RuleStatements';
+import {
+    RuleBlockStatement,
+    RuleFunction,
+    RuleIfStatement,
+    RuleLetStatement,
+    RuleReturn,
+    RuleStatement
+} from '../rules/RuleStatements';
 
 export function BinaryExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
     switch (node.operator) {
@@ -25,6 +32,11 @@ export function BinaryExpression(node: BinaryExpression): RuleExpression<Complet
             return NumberBinaryExpression(node);
         case '+':
             return AdditionExpression(node);
+        case '==':
+        case '!=':
+        case '===':
+        case '!==':
+            return EqualityExpression(node);
         default:
             throw new Error('Unsupported operator: ' + node.operator);
     }
@@ -41,18 +53,27 @@ class RuleJsBinaryOperation extends RuleBinaryExpression<PrimitiveValue, Primiti
     }
 }
 
-function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
-    return call(new RuleFunction([], [
+function getParameterValues(node: BinaryExpression): RuleStatement[] {
+    return [
         new RuleLetStatement('leftValue', getValue(toRule(node.left))),
         returnIfAbrupt('leftValue'),
         new RuleLetStatement('rightValue', getValue(toRule(node.right))),
-        returnIfAbrupt('rightValue'),
+        returnIfAbrupt('rightValue')
+    ];
+}
+
+function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
+    return call(new RuleFunction([], [
+        ...getParameterValues(node),
         new RuleLetStatement('lprim', toPrimitive(readVariable('leftValue'))),
         returnIfAbrupt('lprim'),
         new RuleLetStatement('rprim', toPrimitive(readVariable('rightValue'))),
         returnIfAbrupt('rprim'),
         new RuleIfStatement(
-            or(isType(readVariable('lprim'), Type.STRING), isType(readVariable('rprim'), Type.STRING)),
+            or(
+                same(getType(readVariable('lprim')), constant(Type.STRING)),
+                same(getType(readVariable('rprim')), constant(Type.STRING))
+            ),
             new RuleBlockStatement([
                 new RuleLetStatement('lstr', toString(readVariable('lprim'))),
                 returnIfAbrupt('lstr'),
@@ -81,10 +102,7 @@ function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRe
 
 function NumberBinaryExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
     return call(new RuleFunction([], [
-        new RuleLetStatement('leftValue', getValue(toRule(node.left))),
-        returnIfAbrupt('leftValue'),
-        new RuleLetStatement('rightValue', getValue(toRule(node.right))),
-        returnIfAbrupt('rightValue'),
+        ...getParameterValues(node),
         new RuleLetStatement('lnum', toNumber(readVariable('leftValue'))),
         returnIfAbrupt('lnum'),
         new RuleLetStatement('rnum', toNumber(readVariable('rightValue'))),
@@ -94,6 +112,27 @@ function NumberBinaryExpression(node: BinaryExpression): RuleExpression<Completi
             readVariable('lnum'),
             readVariable('rnum')
         )))
+    ]), []);
+}
+
+function negate(expression: RuleExpression<CompletionRecord>): RuleExpression<CompletionRecord> {
+    return call(new RuleFunction(['param'], [
+        returnIfAbrupt('param'),
+        new RuleReturn(normalCompletion(new RuleUnaryExpression(
+            readVariable('param'),
+            p => new PrimitiveValue(!(p as PrimitiveValue).value))
+        ))
+    ]), [expression]);
+}
+
+function EqualityExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
+    const eq = node.operator.length === 3 ? strictEquals : equals;
+    const eqResult = eq(readVariable('leftValue'), readVariable('rightValue'));
+    const result = node.operator[0] === '!' ? negate(eqResult) : eqResult;
+
+    return call(new RuleFunction([], [
+        ...getParameterValues(node),
+        new RuleReturn(result)
     ]), []);
 }
 

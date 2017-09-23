@@ -38,7 +38,6 @@ export function toString(param: RuleExpression<JSValue>): RuleExpression<Complet
             throw new Error('Converting object to primitive');
         }
     });
-
 }
 
 export function referenceError(): RuleExpression<ObjectValue> {

@@ -23,6 +23,6 @@ export function toObject(value: RuleExpression<JSValue>): RuleExpression<ObjectV
     });
 }
 
-export function isType(expression: RuleExpression<JSValue>, type: Type): RuleExpression<boolean> {
-    return new RuleUnaryExpression(expression, value => value.getType() === type);
+export function getType(expression: RuleExpression<JSValue>): RuleExpression<Type> {
+    return new RuleUnaryExpression(expression, value => value.getType());
 }
