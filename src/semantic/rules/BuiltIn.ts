@@ -4,12 +4,6 @@ import {newObject, ObjectValue} from '../domain/js/ObjectValue';
 import {PrimitiveValue} from '../domain/js/PrimitiveValue';
 import {RuleExpression, RuleUnaryExpression} from './RuleExpression';
 
-export function regExpCreate(pattern: RuleExpression<PrimitiveValue>,
-                             flags: RuleExpression<PrimitiveValue>): RuleExpression<ObjectValue> {
-
-    throw new Error('not implemented yet');
-}
-
 export function toNumber(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
     return new RuleUnaryExpression(param, arg => {
         if (arg instanceof PrimitiveValue) {
@@ -41,5 +35,5 @@ export function toString(param: RuleExpression<JSValue>): RuleExpression<Complet
 }
 
 export function referenceError(): RuleExpression<ObjectValue> {
-    return newObject();
+    return newObject(null);
 }

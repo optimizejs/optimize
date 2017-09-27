@@ -12,8 +12,11 @@ export class ObjectValue extends JSValue {
     }
 }
 
-class RuleNewObjectExpression implements RuleExpression<ObjectValue> {
+export class RuleNewObjectExpression<T> implements RuleExpression<ObjectValue> {
     expression: ObjectValue;
+
+    constructor(readonly payload: T) {
+    }
 
     execute(evaluation: Evaluation): Optimized<RuleExpression<ObjectValue>> {
         return Optimized.original(this);
@@ -46,6 +49,6 @@ export function callGet(obj: RuleExpression<ObjectValue>, property: RuleExpressi
     return new RuleCallGetExpression(obj, property, thisValue);
 }
 
-export function newObject(): RuleExpression<ObjectValue> {
-    return new RuleNewObjectExpression();
+export function newObject<T>(payload: T): RuleExpression<ObjectValue> {
+    return new RuleNewObjectExpression(payload);
 }

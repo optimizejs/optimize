@@ -18,7 +18,7 @@ declare module 'recast' {
 
         expressionStatement(expression: Expression): ExpressionStatement;
 
-        literal(value: primitive): Literal;
+        literal(value: primitive | RegExp): Literal;
 
         program(statements: Statement[]): Program;
 

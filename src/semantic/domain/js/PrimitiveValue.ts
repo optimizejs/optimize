@@ -24,6 +24,8 @@ export class PrimitiveValue extends JSValue {
         throw new Error('Unknown type');
     }
 }
+export type Prim = PrimitiveValue;
+export type PrimExpr = RuleExpression<Prim>;
 
 export function isPrimitive(value: RuleExpression<JSValue>): RuleExpression<boolean> {
     return new RuleUnaryExpression(value, arg => arg instanceof PrimitiveValue);

@@ -3,7 +3,7 @@ import {types} from 'recast';
 import {toExpression, toRule} from '../../RuleMapper';
 import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../domain/CompletionRecords';
 import {getType, Type} from '../domain/js/JSValue';
-import {PrimitiveValue} from '../domain/js/PrimitiveValue';
+import {Prim, PrimExpr, PrimitiveValue} from '../domain/js/PrimitiveValue';
 import {call, constant, or, readVariable, RuleCallExpression, same} from '../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../rules/BuiltIn';
 import {equals, getValue, strictEquals} from '../rules/Others';
@@ -47,10 +47,13 @@ function jsEvaluator(operator: string): (l: PrimitiveValue, r: PrimitiveValue) =
     return (lval: PrimitiveValue, rval: PrimitiveValue) => new PrimitiveValue(evaluator(lval.value, rval.value));
 }
 
-class RuleJsBinaryOperation extends RuleBinaryExpression<PrimitiveValue, PrimitiveValue, PrimitiveValue> {
-    constructor(readonly operator: string, l: RuleExpression<PrimitiveValue>, r: RuleExpression<PrimitiveValue>) {
-        super(l, r, jsEvaluator(operator));
+class JSBinaryPayload {
+    constructor(readonly operator: string) {
     }
+}
+
+function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleBinaryExpression<Prim, Prim, Prim, JSBinaryPayload> {
+    return new RuleBinaryExpression(l, r, jsEvaluator(operator), new JSBinaryPayload(operator));
 }
 
 function getParameterValues(node: BinaryExpression): RuleStatement[] {
@@ -79,7 +82,7 @@ function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRe
                 returnIfAbrupt('lstr'),
                 new RuleLetStatement('rstr', toString(readVariable('rprim'))),
                 returnIfAbrupt('rstr'),
-                new RuleReturn(normalCompletion(new RuleJsBinaryOperation(
+                new RuleReturn(normalCompletion(jsBinary(
                     '+',
                     readVariable('lstr'),
                     readVariable('rstr')
@@ -90,7 +93,7 @@ function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRe
                 returnIfAbrupt('lnum'),
                 new RuleLetStatement('rnum', toNumber(readVariable('rprim'))),
                 returnIfAbrupt('rnum'),
-                new RuleReturn(normalCompletion(new RuleJsBinaryOperation(
+                new RuleReturn(normalCompletion(jsBinary(
                     '+',
                     readVariable('lnum'),
                     readVariable('rnum')
@@ -107,7 +110,7 @@ function NumberBinaryExpression(node: BinaryExpression): RuleExpression<Completi
         returnIfAbrupt('lnum'),
         new RuleLetStatement('rnum', toNumber(readVariable('rightValue'))),
         returnIfAbrupt('rnum'),
-        new RuleReturn(normalCompletion(new RuleJsBinaryOperation(
+        new RuleReturn(normalCompletion(jsBinary(
             node.operator,
             readVariable('lnum'),
             readVariable('rnum')
@@ -141,19 +144,44 @@ export function createBinaryExpression(rule: RuleExpression<CompletionRecord>): 
         return null;
     }
     const fn = rule.fn;
-    if (fn.body.length !== 9) {
-        return null;
+
+    if (fn.body.length === 5) {
+        const ret = fn.body[4];
+        if (ret instanceof RuleReturn) {
+            let expression = ret.expression;
+
+            let negated = false;
+            if (expression instanceof RuleCallExpression && expression.fn.body.length === 2) {
+                negated = true;
+                expression = expression.parameters[0];
+            }
+
+            let operator;
+            if (expression instanceof RuleCallExpression) {
+                operator = '==';
+            } else {
+                operator = '===';
+            }
+            if (negated) {
+                operator = '!' + operator.substring(1);
+            }
+            return types.builders.binaryExpression(operator, extract(fn.body[0]), extract(fn.body[2]));
+        }
     }
-    // todo
-    const ret = fn.body[8];
-    if (ret instanceof RuleReturn && ret.expression instanceof RuleUnaryExpression) {
-        const mul = ret.expression.argument;
-        if (mul instanceof RuleJsBinaryOperation) {
 
-            const left = extract(fn.body[0]);
-            const right = extract(fn.body[2]);
+    if (fn.body.length === 9) {
+        const ret = fn.body[8];
+        if (ret instanceof RuleReturn && ret.expression instanceof RuleUnaryExpression) {
+            const mul = ret.expression.argument;
+            if (mul instanceof RuleBinaryExpression && mul.payload instanceof JSBinaryPayload) {
 
-            return types.builders.binaryExpression(mul.operator, left, right);
+                const left = extract(fn.body[0]);
+                const right = extract(fn.body[2]);
+
+                return types.builders.binaryExpression(mul.payload.operator, left, right);
+            }
+        } else if (ret instanceof RuleIfStatement) { // + operator
+            return types.builders.binaryExpression('+', extract(fn.body[0]), extract(fn.body[2]));
         }
     }
     return null;

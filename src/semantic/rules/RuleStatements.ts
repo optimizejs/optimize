@@ -6,10 +6,17 @@ import {Optimized} from './Optimized';
 import {RuleExpression} from './RuleExpression';
 
 function flattenOptimize(evaluation: Evaluation, statements: RuleStatement[]): Optimized<RuleStatement>[] {
+    let canReturn = false;
     const result: Optimized<RuleStatement>[] = [];
     for (const statement of statements) {
-        const optimized = statement.execute(evaluation);
+        let optimized: Optimized<RuleStatement>;
+        if (canReturn) {
+            optimized = Optimized.original(statement);
+        } else {
+            optimized = statement.execute(evaluation);
+        }
         const newStatement = optimized.get();
+        canReturn = canReturn || newStatement.canReturn();
         if (newStatement instanceof RuleBlockStatement) {
             result.push(...newStatement.body.map(st => Optimized.optimized(st)));
         } else {
@@ -17,6 +24,15 @@ function flattenOptimize(evaluation: Evaluation, statements: RuleStatement[]): O
         }
     }
     return result;
+}
+
+function canReturnAny(statements: RuleStatement[]): boolean {
+    for (const statement of statements) {
+        if (statement.canReturn()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 export class RuleFunction {
@@ -46,6 +62,8 @@ export abstract class RuleStatement implements Executable<RuleStatement> {
     st: 1;
 
     abstract execute(evaluation: Evaluation): Optimized<RuleStatement>;
+
+    abstract canReturn(): boolean;
 }
 
 export class RuleBlockStatement extends RuleStatement {
@@ -57,6 +75,10 @@ export class RuleBlockStatement extends RuleStatement {
         const body = flattenOptimize(evaluation, this.body);
         return Optimized.wrapIfOptimized(body, this, () => new RuleBlockStatement(body.map(s => s.get())));
         // todo optimize single
+    }
+
+    canReturn(): boolean {
+        return canReturnAny(this.body);
     }
 }
 
@@ -75,6 +97,10 @@ export class RuleLetStatement extends RuleStatement {
 
         return optimizedExpression.wrapIfOptimized(this, e => new RuleLetStatement(this.variableName, e));
     }
+
+    canReturn(): boolean {
+        return false;
+    }
 }
 
 export class RuleReturn extends RuleStatement {
@@ -84,6 +110,10 @@ export class RuleReturn extends RuleStatement {
 
     execute(evaluation: Evaluation): Optimized<RuleStatement> {
         return this.expression.execute(evaluation).wrapIfOptimized(this, e => new RuleReturn(e)); // todo
+    }
+
+    canReturn(): boolean {
+        return true;
     }
 }
 
@@ -119,6 +149,10 @@ export class RuleIfStatement extends RuleStatement {
             this,
             () => new RuleIfStatement(test, optimizedConsequent.get(), optimizedAlternate.get())
         );
+    }
+
+    canReturn(): boolean {
+        return this.consequent.canReturn() || this.alternate.canReturn();
     }
 }
 

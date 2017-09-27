@@ -23,11 +23,11 @@ export class RuleUnaryExpression<A, T> implements RuleExpression<T> {
     }
 }
 
-export class RuleBinaryExpression<L, R, T> implements RuleExpression<T> {
+export class RuleBinaryExpression<L, R, T, P = void> implements RuleExpression<T> {
     expression: T;
 
     constructor(readonly left: RuleExpression<L>, readonly right: RuleExpression<R>,
-                private calculate: (left: L, right: R) => T) {
+                private calculate: (left: L, right: R) => T, readonly payload?: P) {
     }
 
     execute(evaluation: Evaluation): Optimized<RuleExpression<T>> {
@@ -41,7 +41,7 @@ export class RuleBinaryExpression<L, R, T> implements RuleExpression<T> {
         return Optimized.wrapIfOptimized(
             [optimizedLeft, optimizedRight],
             this,
-            () => new RuleBinaryExpression(left, right, this.calculate)
+            () => new RuleBinaryExpression(left, right, this.calculate, this.payload)
         );
     }
 }

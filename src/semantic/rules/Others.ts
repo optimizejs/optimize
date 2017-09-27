@@ -8,7 +8,7 @@ import {
 import {getBindingValue} from '../domain/EnvironmentRecord';
 import {getType, JSValue, toObject} from '../domain/js/JSValue';
 import {callGet} from '../domain/js/ObjectValue';
-import {isPrimitive, PrimitiveValue} from '../domain/js/PrimitiveValue';
+import {isPrimitive, Prim, PrimExpr, PrimitiveValue} from '../domain/js/PrimitiveValue';
 import {
     getBase,
     getReferencedName,
@@ -80,23 +80,18 @@ function strictComparison(x: JSValue, y: JSValue): boolean {
     throw new Error('Object values are not supported');
 }
 
-class StrictEqualityComparison extends RuleBinaryExpression<JSValue, JSValue, CompletionRecord> {
-    constructor(left: RuleExpression<JSValue>, right: RuleExpression<JSValue>) {
-        super(left, right, (l, r) => new NormalCompletionRecord(new PrimitiveValue(strictComparison(l, r))));
-    }
-}
+function primitiveEqualityComparison(left: PrimExpr, right: PrimExpr): RuleBinaryExpression<Prim, Prim, Prim> {
 
-class PrimitiveEqualityComparison extends RuleBinaryExpression<PrimitiveValue, PrimitiveValue, PrimitiveValue> {
-    constructor(left: RuleExpression<PrimitiveValue>, right: RuleExpression<PrimitiveValue>) {
-        super(left, right, (l, r) => {
-            /* tslint:disable-next-line */
-            return new PrimitiveValue(l.value == r.value);
-        });
-    }
+    return new RuleBinaryExpression(left, right, (l, r) => {
+        /* tslint:disable-next-line */
+        return new PrimitiveValue(l.value == r.value);
+    });
 }
 
 export function strictEquals(x: RuleExpression<JSValue>, y: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new StrictEqualityComparison(x, y);
+    return new RuleBinaryExpression(x, y, (l, r) => {
+        return new NormalCompletionRecord(new PrimitiveValue(strictComparison(l, r)));
+    });
 }
 
 const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [
@@ -105,7 +100,7 @@ const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [
         new RuleReturn(strictEquals(readVariable('x'), readVariable('y'))),
         new RuleIfStatement(
             and(isPrimitive(readVariable('x')), isPrimitive(readVariable('y'))),
-            new RuleReturn(normalCompletion(new PrimitiveEqualityComparison(readVariable('x'), readVariable('y')))),
+            new RuleReturn(normalCompletion(primitiveEqualityComparison(readVariable('x'), readVariable('y')))),
             new RuleReturn(new RuleBinaryExpression(readVariable('x'), readVariable('y'), (l, r) => {
                 throw new Error('Not implemented!');
             }))
