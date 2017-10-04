@@ -1,3 +1,5 @@
+import {RuleExpression} from './RuleExpression';
+
 export class Optimized<T> {
     static original<T>(item: T): Optimized<T> {
         return new Optimized(item, false);
@@ -10,7 +12,7 @@ export class Optimized<T> {
     static wrapIfOptimized<O>(items: Optimized<any>[], original: O, wrapper: () => O): Optimized<O> {
         for (const item of items) {
             if (item.optimized) {
-                return new Optimized(wrapper(), true);
+                return new Optimized(addOriginal(wrapper(), original), true);
             }
         }
         return new Optimized(original, false);
@@ -28,11 +30,17 @@ export class Optimized<T> {
     }
 
     wrapIfOptimized<O>(original: O, wrapper: (t: T) => O): Optimized<O> {
-        // return Optimized.wrapIfOptimized([this], original,) TODO?
-        return new Optimized(this.optimized ? wrapper(this.item) : original, this.optimized);
+        return new Optimized(this.optimized ? addOriginal(wrapper(this.item), original) : original, this.optimized);
     }
 
     asOptimized(): Optimized<T> {
         return this.optimized ? this : new Optimized(this.item, true);
     }
+}
+
+function addOriginal<T>(obj: T, original: T): T {
+    if (obj instanceof RuleExpression && original instanceof RuleExpression) {
+        obj.original = original.original;
+    }
+    return obj;
 }

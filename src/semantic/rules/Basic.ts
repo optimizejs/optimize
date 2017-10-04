@@ -4,10 +4,9 @@ import {Optimized} from './Optimized';
 import {RuleBinaryExpression, RuleExpression} from './RuleExpression';
 import {RuleFunction, RuleReturn} from './RuleStatements';
 
-export class RuleConstantExpression<T> implements RuleExpression<T> {
-    expression: T;
-
+export class RuleConstantExpression<T> extends RuleExpression<T> {
     constructor(readonly value: T) {
+        super();
     }
 
     execute(evaluation: Evaluation): Optimized<RuleExpression<T>> {
@@ -15,10 +14,9 @@ export class RuleConstantExpression<T> implements RuleExpression<T> {
     }
 }
 
-export class RuleCallExpression implements RuleExpression<CompletionRecord> {
-    expression: CompletionRecord;
-
+export class RuleCallExpression extends RuleExpression<CompletionRecord> {
     constructor(readonly fn: RuleFunction, readonly parameters: RuleExpression<any>[]) {
+        super();
     }
 
     execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<CompletionRecord>> {
@@ -41,10 +39,9 @@ export class RuleCallExpression implements RuleExpression<CompletionRecord> {
     }
 }
 
-class RuleReadVariableExpression implements RuleExpression<any> {
-    expression: any;
-
+class RuleReadVariableExpression extends RuleExpression<any> {
     constructor(private variable: string) {
+        super();
     }
 
     execute(evaluation: Evaluation): Optimized<RuleExpression<any>> {

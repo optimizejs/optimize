@@ -12,10 +12,9 @@ export class ObjectValue extends JSValue {
     }
 }
 
-export class RuleNewObjectExpression<T> implements RuleExpression<ObjectValue> {
-    expression: ObjectValue;
-
+export class RuleNewObjectExpression<T> extends RuleExpression<ObjectValue> {
     constructor(readonly payload: T) {
+        super();
     }
 
     execute(evaluation: Evaluation): Optimized<RuleExpression<ObjectValue>> {
@@ -23,11 +22,10 @@ export class RuleNewObjectExpression<T> implements RuleExpression<ObjectValue> {
     }
 }
 
-class RuleCallGetExpression implements RuleExpression<CompletionRecord> {
-    expression: CompletionRecord;
-
+class RuleCallGetExpression extends RuleExpression<CompletionRecord> {
     constructor(private obj: RuleExpression<ObjectValue>, private property: RuleExpression<string>,
                 private thisValue: RuleExpression<ObjectValue>) {
+        super();
     }
 
     execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<CompletionRecord>> {

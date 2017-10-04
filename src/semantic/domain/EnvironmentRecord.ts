@@ -7,11 +7,10 @@ export abstract class EnvironmentRecord {
     env: true;
 }
 
-class GetBindingValueExpression implements RuleExpression<CompletionRecord> { // todo abstract ternary expression
-    expression: CompletionRecord;
-
+class GetBindingValueExpression extends RuleExpression<CompletionRecord> { // todo abstract ternary expression
     constructor(private er: RuleExpression<EnvironmentRecord>, private name: RuleExpression<string>,
                 private isStrict: RuleExpression<boolean>) {
+        super();
     }
 
     execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<CompletionRecord>> {

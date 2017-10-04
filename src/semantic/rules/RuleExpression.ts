@@ -1,16 +1,18 @@
+import {Node} from 'estree';
 import {constant, RuleConstantExpression} from './Basic';
 import {Evaluation} from './Evaluation';
 import {Executable} from './Executable';
 import {Optimized} from './Optimized';
 
-export interface RuleExpression<T> extends Executable<RuleExpression<T>> {
-    expression: T;
+export abstract class RuleExpression<T> implements Executable<RuleExpression<T>> {
+    original: Node;
+
+    abstract execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>>;
 }
 
-export class RuleUnaryExpression<A, T> implements RuleExpression<T> {
-    expression: T;
-
+export class RuleUnaryExpression<A, T> extends RuleExpression<T> {
     constructor(readonly argument: RuleExpression<A>, private calculate: (arg: A) => T) {
+        super();
     }
 
     execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>> {
@@ -23,11 +25,10 @@ export class RuleUnaryExpression<A, T> implements RuleExpression<T> {
     }
 }
 
-export class RuleBinaryExpression<L, R, T, P = void> implements RuleExpression<T> {
-    expression: T;
-
+export class RuleBinaryExpression<L, R, T, P = void> extends RuleExpression<T> {
     constructor(readonly left: RuleExpression<L>, readonly right: RuleExpression<R>,
                 private calculate: (left: L, right: R) => T, readonly payload?: P) {
+        super();
     }
 
     execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>> {

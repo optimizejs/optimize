@@ -35,7 +35,9 @@ const programMap: BackMapper<IProgram>[] = [
 ];
 
 export function toRule(node: Node): RuleExpression<CompletionRecord> {
-    return ruleMap[node.type](node);
+    const result = ruleMap[node.type](node);
+    result.original = node;
+    return result;
 }
 
 export function toExpression(rule: RuleExpression<CompletionRecord>): Expression {
@@ -54,8 +56,26 @@ function toNode<T extends Node>(rule: RuleExpression<CompletionRecord>, map: Bac
     for (const mapper of map) {
         const result = mapper(rule);
         if (result !== null) {
+            if (rule.original) {
+                if (rule.original.type === result.type) {
+                    const copy: T = clone(rule.original) as T;
+                    const keys = Object.keys(result) as (keyof T)[];
+                    for (const key of keys) {
+                        copy[key] = result[key];
+                    }
+                    return copy;
+                }
+            }
             return result;
         }
     }
     throw new Error('No mapping found!');
+}
+
+function clone<T>(obj: T): T {
+    const result = Object.create(Object.getPrototypeOf(obj));
+    for (const key of Object.getOwnPropertyNames(obj)) {
+        Object.defineProperty(result, key, Object.getOwnPropertyDescriptor(obj, key));
+    }
+    return result;
 }
