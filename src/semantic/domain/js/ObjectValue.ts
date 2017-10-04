@@ -30,10 +30,10 @@ class RuleCallGetExpression implements RuleExpression<CompletionRecord> {
                 private thisValue: RuleExpression<ObjectValue>) {
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleExpression<CompletionRecord>> {
-        const obj = this.obj.execute(evaluation);
-        const property = this.property.execute(evaluation);
-        const thisValue = this.thisValue.execute(evaluation);
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<CompletionRecord>> {
+        const obj = this.obj.execute(evaluation, confident);
+        const property = this.property.execute(evaluation, confident);
+        const thisValue = this.thisValue.execute(evaluation, confident);
 
         return Optimized.wrapIfOptimized(
             [obj, property, thisValue],

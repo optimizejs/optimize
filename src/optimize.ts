@@ -6,7 +6,7 @@ function optimizeSource(src: string): string {
     const node = recast.parse(src);
 
     const rule = toRule(node.program);
-    const optimized = rule.execute(new Evaluation());
+    const optimized = rule.execute(new Evaluation(), true);
     const newNode = toProgram(optimized.get());
 
     const crlf = src[src.indexOf('\n') - 1] === '\r';

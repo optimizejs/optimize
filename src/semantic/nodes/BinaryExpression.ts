@@ -4,7 +4,7 @@ import {toExpression, toRule} from '../../RuleMapper';
 import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../domain/CompletionRecords';
 import {getType, Type} from '../domain/js/JSValue';
 import {Prim, PrimExpr, PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {call, constant, or, readVariable, RuleCallExpression, same} from '../rules/Basic';
+import {call, constant, or, readVariable, RuleCallExpression, RuleConstantExpression, same} from '../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../rules/BuiltIn';
 import {equals, getValue, strictEquals} from '../rules/Others';
 import {RuleBinaryExpression, RuleExpression, RuleUnaryExpression} from '../rules/RuleExpression';
@@ -188,5 +188,10 @@ export function createBinaryExpression(rule: RuleExpression<CompletionRecord>): 
 }
 
 function extract(p: any): Expression {
-    return toExpression(((p as RuleLetStatement).expression as RuleCallExpression).parameters[0]);
+    const expression = (p as RuleLetStatement).expression;
+    if (expression instanceof RuleConstantExpression) {
+        return toExpression(expression);
+    } else {
+        return toExpression((expression as RuleCallExpression).parameters[0]);
+    }
 }

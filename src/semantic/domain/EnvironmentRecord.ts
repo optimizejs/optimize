@@ -14,10 +14,10 @@ class GetBindingValueExpression implements RuleExpression<CompletionRecord> { //
                 private isStrict: RuleExpression<boolean>) {
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleExpression<CompletionRecord>> {
-        const er = this.er.execute(evaluation);
-        const name = this.name.execute(evaluation);
-        const isStrict = this.isStrict.execute(evaluation);
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<CompletionRecord>> {
+        const er = this.er.execute(evaluation, confident);
+        const name = this.name.execute(evaluation, confident);
+        const isStrict = this.isStrict.execute(evaluation, confident);
 
         return Optimized.wrapIfOptimized(
             [er, name, isStrict],

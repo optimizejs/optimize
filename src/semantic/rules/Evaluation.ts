@@ -1,24 +1,35 @@
+interface VariableValue {
+    known: boolean;
+    value?: any;
+}
+
 export class Evaluation {
-    private variables: { [name: string]: any } = Object.create(null);
+    private variables: { [name: string]: VariableValue } = Object.create(null);
 
     constructor(private parent?: Evaluation) {
     }
 
     assign(variable: string, value: any): void {
-        this.variables[variable] = value;
+        this.variables[variable] = {known: true, value};
+    }
+
+    assignUnknown(variable: string): void {
+        this.variables[variable] = {known: false};
     }
 
     read(variable: string): any {
         if (this.has(variable)) {
-            return this.variables[variable];
+            return this.variables[variable].value;
         }
         return (this.parent as Evaluation).read(variable);
     }
 
-    has(variable: string): boolean {
-        return Object.prototype.hasOwnProperty.call(this.variables, variable);
+    isKnownValue(variable: string): boolean {
+        if (this.has(variable)) {
+            return this.variables[variable].known;
+        }
+        return (this.parent as Evaluation).isKnownValue(variable);
     }
-
     sub(): Evaluation {
         return new Evaluation(this);
     }
@@ -33,6 +44,11 @@ export class Evaluation {
             }
         }
     }
+
+    protected has(variable: string): boolean {
+        return Object.prototype.hasOwnProperty.call(this.variables, variable);
+    }
+
 }
 
 function equals(a: any, b: any): boolean {

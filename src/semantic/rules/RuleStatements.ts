@@ -5,15 +5,17 @@ import {Executable} from './Executable';
 import {Optimized} from './Optimized';
 import {RuleExpression} from './RuleExpression';
 
-function flattenOptimize(evaluation: Evaluation, statements: RuleStatement[]): Optimized<RuleStatement>[] {
+function flattenOptimize(evaluation: Evaluation, confident: boolean,
+                         statements: RuleStatement[]): Optimized<RuleStatement>[] {
+
     let canReturn = false;
     const result: Optimized<RuleStatement>[] = [];
     for (const statement of statements) {
         let optimized: Optimized<RuleStatement>;
         if (canReturn) {
-            optimized = Optimized.original(statement);
+            optimized = statement.execute(evaluation, false);
         } else {
-            optimized = statement.execute(evaluation);
+            optimized = statement.execute(evaluation, confident);
         }
         const newStatement = optimized.get();
         canReturn = canReturn || newStatement.canReturn();
@@ -43,12 +45,15 @@ export class RuleFunction {
         const evaluation = new Evaluation();
         for (let i = 0; i < params.length; i++) {
             const param = params[i];
+            const variable = this.paramNames[i];
             if (param instanceof RuleConstantExpression) {
-                evaluation.assign(this.paramNames[i], param.value);
+                evaluation.assign(variable, param.value);
+            } else {
+                evaluation.assignUnknown(variable);
             }
         }
 
-        const statements = flattenOptimize(evaluation, this.body);
+        const statements = flattenOptimize(evaluation, true, this.body);
 
         return Optimized.wrapIfOptimized(
             statements,
@@ -61,7 +66,7 @@ export class RuleFunction {
 export abstract class RuleStatement implements Executable<RuleStatement> {
     st: 1;
 
-    abstract execute(evaluation: Evaluation): Optimized<RuleStatement>;
+    abstract execute(evaluation: Evaluation, confident: boolean): Optimized<RuleStatement>;
 
     abstract canReturn(): boolean;
 }
@@ -71,8 +76,8 @@ export class RuleBlockStatement extends RuleStatement {
         super();
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleStatement> {
-        const body = flattenOptimize(evaluation, this.body);
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleStatement> {
+        const body = flattenOptimize(evaluation, confident, this.body);
         return Optimized.wrapIfOptimized(body, this, () => new RuleBlockStatement(body.map(s => s.get())));
         // todo optimize single
     }
@@ -87,12 +92,14 @@ export class RuleLetStatement extends RuleStatement {
         super();
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleStatement> {
-        const optimizedExpression = this.expression.execute(evaluation);
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleStatement> {
+        const optimizedExpression = this.expression.execute(evaluation, confident);
         const expression = optimizedExpression.get();
 
-        if (expression instanceof RuleConstantExpression) {
+        if (expression instanceof RuleConstantExpression && confident) {
             evaluation.assign(this.variableName, expression.value);
+        } else {
+            evaluation.assignUnknown(this.variableName);
         }
 
         return optimizedExpression.wrapIfOptimized(this, e => new RuleLetStatement(this.variableName, e));
@@ -108,8 +115,8 @@ export class RuleReturn extends RuleStatement {
         super();
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleStatement> {
-        return this.expression.execute(evaluation).wrapIfOptimized(this, e => new RuleReturn(e)); // todo
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleStatement> {
+        return this.expression.execute(evaluation, confident).wrapIfOptimized(this, e => new RuleReturn(e)); // todo
     }
 
     canReturn(): boolean {
@@ -124,23 +131,23 @@ export class RuleIfStatement extends RuleStatement {
         super();
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleStatement> {
-        const optimizedTest = this.test.execute(evaluation);
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleStatement> {
+        const optimizedTest = this.test.execute(evaluation, confident);
         const test = optimizedTest.get();
 
         if (test instanceof RuleConstantExpression) {
             if (test.value) {
-                return this.consequent.execute(evaluation).asOptimized();
+                return this.consequent.execute(evaluation, confident).asOptimized();
             } else {
-                return this.alternate.execute(evaluation).asOptimized();
+                return this.alternate.execute(evaluation, true).asOptimized();
             }
         }
 
         const consequent = evaluation.sub();
-        const optimizedConsequent = this.consequent.execute(consequent);
+        const optimizedConsequent = this.consequent.execute(consequent, confident);
 
         const alternate = evaluation.sub();
-        const optimizedAlternate = this.alternate.execute(alternate);
+        const optimizedAlternate = this.alternate.execute(alternate, confident);
 
         evaluation.merge(consequent, alternate);
 

@@ -13,8 +13,8 @@ export class RuleUnaryExpression<A, T> implements RuleExpression<T> {
     constructor(readonly argument: RuleExpression<A>, private calculate: (arg: A) => T) {
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleExpression<T>> {
-        const optimizedArg = this.argument.execute(evaluation);
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>> {
+        const optimizedArg = this.argument.execute(evaluation, confident);
         const x = optimizedArg.get();
         if (x instanceof RuleConstantExpression) {
             return Optimized.optimized(constant(this.calculate(x.value as A)));
@@ -30,9 +30,9 @@ export class RuleBinaryExpression<L, R, T, P = void> implements RuleExpression<T
                 private calculate: (left: L, right: R) => T, readonly payload?: P) {
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleExpression<T>> {
-        const optimizedLeft = this.left.execute(evaluation);
-        const optimizedRight = this.right.execute(evaluation);
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>> {
+        const optimizedLeft = this.left.execute(evaluation, confident);
+        const optimizedRight = this.right.execute(evaluation, confident);
         const left = optimizedLeft.get();
         const right = optimizedRight.get();
         if (left instanceof RuleConstantExpression && right instanceof RuleConstantExpression) {

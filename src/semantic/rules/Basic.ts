@@ -21,8 +21,8 @@ export class RuleCallExpression implements RuleExpression<CompletionRecord> {
     constructor(readonly fn: RuleFunction, readonly parameters: RuleExpression<any>[]) {
     }
 
-    execute(evaluation: Evaluation): Optimized<RuleExpression<CompletionRecord>> {
-        const optimizedParams = this.parameters.map(param => param.execute(evaluation));
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<CompletionRecord>> {
+        const optimizedParams = this.parameters.map(param => param.execute(evaluation, confident));
         const params = optimizedParams.map(param => param.get());
         const optimizedFn = this.fn.call(params);
 
@@ -48,7 +48,7 @@ class RuleReadVariableExpression implements RuleExpression<any> {
     }
 
     execute(evaluation: Evaluation): Optimized<RuleExpression<any>> {
-        if (evaluation.has(this.variable)) { // todo handle set to unknown, parent, etc.
+        if (evaluation.isKnownValue(this.variable)) {
             return Optimized.optimized(new RuleConstantExpression(evaluation.read(this.variable)));
         }
         return Optimized.original(this);
