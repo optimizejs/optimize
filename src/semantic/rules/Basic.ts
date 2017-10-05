@@ -1,7 +1,7 @@
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {Evaluation} from './Evaluation';
 import {Optimized} from './Optimized';
-import {RuleBinaryExpression, RuleExpression} from './RuleExpression';
+import {RuleBinaryExpression, RuleExpression, SimpleBinaryCalculator} from './RuleExpression';
 import {RuleFunction, RuleReturn} from './RuleStatements';
 
 export class RuleConstantExpression<T> extends RuleExpression<T> {
@@ -61,15 +61,15 @@ export function readVariable(variable: string): RuleExpression<any> {
 }
 
 export function or(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
-    return new RuleBinaryExpression(expr1, expr2, (a, b) => a || b);
+    return new RuleBinaryExpression(expr1, expr2, new SimpleBinaryCalculator((a, b) => a || b));
 }
 
 export function and(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
-    return new RuleBinaryExpression(expr1, expr2, (a, b) => a && b);
+    return new RuleBinaryExpression(expr1, expr2, new SimpleBinaryCalculator((a, b) => a && b));
 }
 
 export function same<T>(x: RuleExpression<T>, y: RuleExpression<T>): RuleExpression<boolean> {
-    return new RuleBinaryExpression(x, y, (l, r) => l === r);
+    return new RuleBinaryExpression(x, y, new SimpleBinaryCalculator((l, r) => l === r));
 }
 
 export function constant<T>(value: T): RuleExpression<T> {

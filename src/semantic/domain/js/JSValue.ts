@@ -1,4 +1,9 @@
-import {RuleExpression, RuleUnaryExpression} from '../../rules/RuleExpression';
+import {
+    notImplementedUnaryCalculator,
+    RuleExpression,
+    RuleUnaryExpression,
+    SimpleUnaryCalculator
+} from '../../rules/RuleExpression';
 import {ObjectValue} from './ObjectValue';
 
 export abstract class JSValue {
@@ -18,11 +23,9 @@ export const enum Type {
 }
 
 export function toObject(value: RuleExpression<JSValue>): RuleExpression<ObjectValue> {
-    return new RuleUnaryExpression(value, () => {
-        throw new Error('Not implemented!');
-    });
+    return new RuleUnaryExpression(value, notImplementedUnaryCalculator);
 }
 
 export function getType(expression: RuleExpression<JSValue>): RuleExpression<Type> {
-    return new RuleUnaryExpression(expression, value => value.getType());
+    return new RuleUnaryExpression(expression, new SimpleUnaryCalculator(value => value.getType()));
 }

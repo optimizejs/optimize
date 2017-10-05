@@ -20,7 +20,7 @@ import {
 } from '../domain/Reference';
 import {and, call, readVariable, same} from './Basic';
 import {referenceError} from './BuiltIn';
-import {RuleBinaryExpression, RuleExpression} from './RuleExpression';
+import {RuleBinaryExpression, RuleExpression, SimpleBinaryCalculator} from './RuleExpression';
 import {
     RuleBlockStatement,
     RuleEmptyStatement,
@@ -82,16 +82,16 @@ function strictComparison(x: JSValue, y: JSValue): boolean {
 
 function primitiveEqualityComparison(left: PrimExpr, right: PrimExpr): RuleBinaryExpression<Prim, Prim, Prim> {
 
-    return new RuleBinaryExpression(left, right, (l, r) => {
+    return new RuleBinaryExpression(left, right, new SimpleBinaryCalculator((l, r) => {
         /* tslint:disable-next-line */
         return new PrimitiveValue(l.value == r.value);
-    });
+    }));
 }
 
 export function strictEquals(x: RuleExpression<JSValue>, y: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new RuleBinaryExpression(x, y, (l, r) => {
+    return new RuleBinaryExpression(x, y, new SimpleBinaryCalculator((l, r) => {
         return new NormalCompletionRecord(new PrimitiveValue(strictComparison(l, r)));
-    });
+    }));
 }
 
 const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [
@@ -101,9 +101,12 @@ const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [
         new RuleIfStatement(
             and(isPrimitive(readVariable('x')), isPrimitive(readVariable('y'))),
             new RuleReturn(normalCompletion(primitiveEqualityComparison(readVariable('x'), readVariable('y')))),
-            new RuleReturn(new RuleBinaryExpression(readVariable('x'), readVariable('y'), (l, r) => {
-                throw new Error('Not implemented!');
-            }))
+            new RuleReturn(new RuleBinaryExpression(
+                readVariable('x'),
+                readVariable('y'),
+                new SimpleBinaryCalculator(() => {
+                    throw new Error('Not implemented!');
+                })))
         )
     )
 ]);

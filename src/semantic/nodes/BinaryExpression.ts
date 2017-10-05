@@ -7,7 +7,13 @@ import {Prim, PrimExpr, PrimitiveValue} from '../domain/js/PrimitiveValue';
 import {call, constant, or, readVariable, RuleCallExpression, RuleConstantExpression, same} from '../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../rules/BuiltIn';
 import {equals, getValue, strictEquals} from '../rules/Others';
-import {RuleBinaryExpression, RuleExpression, RuleUnaryExpression} from '../rules/RuleExpression';
+import {
+    BinaryCalculator,
+    RuleBinaryExpression,
+    RuleExpression,
+    RuleUnaryExpression,
+    SimpleUnaryCalculator
+} from '../rules/RuleExpression';
 import {
     RuleBlockStatement,
     RuleFunction,
@@ -42,18 +48,20 @@ export function BinaryExpression(node: BinaryExpression): RuleExpression<Complet
     }
 }
 
-function jsEvaluator(operator: string): (l: PrimitiveValue, r: PrimitiveValue) => PrimitiveValue {
-    const evaluator = new Function('a,b', 'return a ' + operator + ' b;') as (a: primitive, b: primitive) => primitive;
-    return (lval: PrimitiveValue, rval: PrimitiveValue) => new PrimitiveValue(evaluator(lval.value, rval.value));
-}
+class JSBinaryCalculator implements BinaryCalculator<PrimitiveValue, PrimitiveValue, PrimitiveValue> {
+    private readonly evaluator: (a: primitive, b: primitive) => primitive;
 
-class JSBinaryPayload {
     constructor(readonly operator: string) {
+        this.evaluator = new Function('a,b', 'return a ' + operator + ' b;') as any;
+    }
+
+    calculate(left: PrimitiveValue, right: PrimitiveValue): PrimitiveValue {
+        return new PrimitiveValue(this.evaluator(left.value, right.value));
     }
 }
 
-function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleBinaryExpression<Prim, Prim, Prim, JSBinaryPayload> {
-    return new RuleBinaryExpression(l, r, jsEvaluator(operator), new JSBinaryPayload(operator));
+function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleBinaryExpression<Prim, Prim, Prim> {
+    return new RuleBinaryExpression(l, r, new JSBinaryCalculator(operator));
 }
 
 function getParameterValues(node: BinaryExpression): RuleStatement[] {
@@ -121,9 +129,11 @@ function NumberBinaryExpression(node: BinaryExpression): RuleExpression<Completi
 function negate(expression: RuleExpression<CompletionRecord>): RuleExpression<CompletionRecord> {
     return call(new RuleFunction(['param'], [
         returnIfAbrupt('param'),
-        new RuleReturn(normalCompletion(new RuleUnaryExpression(
-            readVariable('param'),
-            p => new PrimitiveValue(!(p as PrimitiveValue).value))
+        new RuleReturn(normalCompletion(
+            new RuleUnaryExpression(
+                readVariable('param'),
+                new SimpleUnaryCalculator(p => new PrimitiveValue(!(p as PrimitiveValue).value))
+            )
         ))
     ]), [expression]);
 }
@@ -173,12 +183,12 @@ export function createBinaryExpression(rule: RuleExpression<CompletionRecord>): 
         const ret = fn.body[8];
         if (ret instanceof RuleReturn && ret.expression instanceof RuleUnaryExpression) {
             const mul = ret.expression.argument;
-            if (mul instanceof RuleBinaryExpression && mul.payload instanceof JSBinaryPayload) {
+            if (mul instanceof RuleBinaryExpression && mul.calculator instanceof JSBinaryCalculator) {
 
                 const left = extract(fn.body[0]);
                 const right = extract(fn.body[2]);
 
-                return types.builders.binaryExpression(mul.payload.operator, left, right);
+                return types.builders.binaryExpression(mul.calculator.operator, left, right);
             }
         } else if (ret instanceof RuleIfStatement) { // + operator
             return types.builders.binaryExpression('+', extract(fn.body[0]), extract(fn.body[2]));

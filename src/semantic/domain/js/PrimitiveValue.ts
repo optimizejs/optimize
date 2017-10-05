@@ -1,4 +1,4 @@
-import {RuleExpression, RuleUnaryExpression} from '../../rules/RuleExpression';
+import {RuleExpression, RuleUnaryExpression, SimpleUnaryCalculator} from '../../rules/RuleExpression';
 import {JSValue, Type} from './JSValue';
 
 export class PrimitiveValue extends JSValue {
@@ -28,7 +28,7 @@ export type Prim = PrimitiveValue;
 export type PrimExpr = RuleExpression<Prim>;
 
 export function isPrimitive(value: RuleExpression<JSValue>): RuleExpression<boolean> {
-    return new RuleUnaryExpression(value, arg => arg instanceof PrimitiveValue);
+    return new RuleUnaryExpression(value, new SimpleUnaryCalculator(arg => arg instanceof PrimitiveValue));
 }
 
 export function is(value: RuleExpression<PrimitiveValue>, target: primitive): RuleExpression<boolean> {

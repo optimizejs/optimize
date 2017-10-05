@@ -10,8 +10,21 @@ export abstract class RuleExpression<T> implements Executable<RuleExpression<T>>
     abstract execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>>;
 }
 
+export interface UnaryCalculator<A, T> {
+    calculate(argument: A): T;
+}
+
+export class SimpleUnaryCalculator<A, T> implements UnaryCalculator<A, T> {
+    constructor(readonly calculate: (arg: A) => T) {
+    }
+}
+
+export const notImplementedUnaryCalculator = new SimpleUnaryCalculator(() => {
+    throw new Error('Not implemented!');
+});
+
 export class RuleUnaryExpression<A, T> extends RuleExpression<T> {
-    constructor(readonly argument: RuleExpression<A>, private calculate: (arg: A) => T) {
+    constructor(readonly argument: RuleExpression<A>, private calculator: UnaryCalculator<A, T>) {
         super();
     }
 
@@ -19,15 +32,24 @@ export class RuleUnaryExpression<A, T> extends RuleExpression<T> {
         const optimizedArg = this.argument.execute(evaluation, confident);
         const x = optimizedArg.get();
         if (x instanceof RuleConstantExpression) {
-            return Optimized.optimized(constant(this.calculate(x.value as A)));
+            return Optimized.optimized(constant(this.calculator.calculate(x.value as A)));
         }
-        return optimizedArg.wrapIfOptimized(this, arg => new RuleUnaryExpression(arg, this.calculate));
+        return optimizedArg.wrapIfOptimized(this, arg => new RuleUnaryExpression(arg, this.calculator));
     }
 }
 
-export class RuleBinaryExpression<L, R, T, P = void> extends RuleExpression<T> {
+export interface BinaryCalculator<L, R, T> {
+    calculate(left: L, right: R): T;
+}
+
+export class SimpleBinaryCalculator<L, R, T> implements BinaryCalculator<L, R, T> {
+    constructor(readonly calculate: (left: L, right: R) => T) {
+    }
+}
+
+export class RuleBinaryExpression<L, R, T> extends RuleExpression<T> {
     constructor(readonly left: RuleExpression<L>, readonly right: RuleExpression<R>,
-                private calculate: (left: L, right: R) => T, readonly payload?: P) {
+                readonly calculator: BinaryCalculator<L, R, T>) {
         super();
     }
 
@@ -37,12 +59,12 @@ export class RuleBinaryExpression<L, R, T, P = void> extends RuleExpression<T> {
         const left = optimizedLeft.get();
         const right = optimizedRight.get();
         if (left instanceof RuleConstantExpression && right instanceof RuleConstantExpression) {
-            return Optimized.optimized(constant(this.calculate(left.value as L, right.value as R)));
+            return Optimized.optimized(constant(this.calculator.calculate(left.value as L, right.value as R)));
         }
         return Optimized.wrapIfOptimized(
             [optimizedLeft, optimizedRight],
             this,
-            () => new RuleBinaryExpression(left, right, this.calculate, this.payload)
+            () => new RuleBinaryExpression(left, right, this.calculator)
         );
     }
 }
