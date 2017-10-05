@@ -1,21 +1,20 @@
 var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
+var glob = require('glob');
 var optimize = require('../target/optimize');
 
-var calculate = path.resolve(__dirname, 'calculate');
-describe('Optimize', function() {
-    var files = fs.readdirSync(calculate);
+var calculate = path.join(__dirname, 'calculate');
+describe('Optimize', function () {
+    var files = glob.sync(calculate + '/**/*.js', {ignore: '**/*.optimized.js'});
 
-    files.forEach(function(file) {
-        if (file.indexOf('.optimized.js') === -1) {
-            it(file, function() {
-                var original = fs.readFileSync(path.resolve(calculate, file), 'UTF-8');
-                var optimized = optimize(original);
-                var expected = fs.readFileSync(path.resolve(calculate, optimizedName(file)), 'UTF-8');
-                assert.strictEqual(optimized, expected);
-            });
-        }
+    files.forEach(function (file) {
+        it(path.relative(calculate, file), function () {
+            var original = fs.readFileSync(file, 'UTF-8');
+            var optimized = optimize(original);
+            var expected = fs.readFileSync(optimizedName(file), 'UTF-8');
+            assert.strictEqual(optimized, expected);
+        });
     });
 });
 
