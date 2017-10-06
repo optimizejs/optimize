@@ -8,13 +8,13 @@ import {
     returnIfAbrupt
 } from '../domain/CompletionRecords';
 import {is, PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {call, constant, readVariable} from '../rules/Basic';
+import {constant, readVariable} from '../rules/Basic';
 import {getValue} from '../rules/Others';
 import {RuleExpression} from '../rules/RuleExpression';
-import {RuleFunction, RuleIfStatement, RuleLetStatement, RuleReturn} from '../rules/RuleStatements';
+import {inNewScope, RuleIfStatement, RuleLetStatement, RuleReturn} from '../rules/RuleStatements';
 
 export function IfStatement(node: IfStatement): RuleExpression<CompletionRecord> {
-    return call(new RuleFunction([], [
+    return inNewScope([
         new RuleLetStatement('exprRef', toRule(node.test)),
         new RuleLetStatement('exprValue', getValue(readVariable('exprRef'))),
         returnIfAbrupt('exprValue'),
@@ -29,5 +29,5 @@ export function IfStatement(node: IfStatement): RuleExpression<CompletionRecord>
             new RuleReturn(normalCompletion(constant(new PrimitiveValue(void 0)))),
             new RuleReturn(readVariable('stmtCompletion'))
         )
-    ]), []);
+    ]);
 }

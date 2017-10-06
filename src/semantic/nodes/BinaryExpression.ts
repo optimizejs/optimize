@@ -17,6 +17,7 @@ import {
     TrackOptimizedExpression
 } from '../rules/RuleExpression';
 import {
+    inNewScope,
     RuleBlockStatement,
     RuleFunction,
     RuleIfStatement,
@@ -94,7 +95,7 @@ class ParamValues {
 function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
     const paramValues = new ParamValues(node);
 
-    return call(new RuleFunction([], [
+    return inNewScope([
         ...paramValues.statements,
         new RuleLetStatement('lprim', toPrimitive(readVariable('leftValue'))),
         returnIfAbrupt('lprim'),
@@ -128,14 +129,14 @@ function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRe
                 )))
             ])
         )
-    ]), [], () => {
+    ], () => {
         return types.builders.binaryExpression('+', paramValues.left(), paramValues.right());
     });
 }
 
 function NumberBinaryExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
     const paramValues = new ParamValues(node);
-    return call(new RuleFunction([], [
+    return inNewScope([
         ...paramValues.statements,
         new RuleLetStatement('lnum', toNumber(readVariable('leftValue'))),
         returnIfAbrupt('lnum'),
@@ -146,7 +147,7 @@ function NumberBinaryExpression(node: BinaryExpression): RuleExpression<Completi
             readVariable('lnum'),
             readVariable('rnum')
         )))
-    ]), [], () => {
+    ], () => {
         return types.builders.binaryExpression(node.operator, paramValues.left(), paramValues.right());
     });
 }
@@ -170,10 +171,10 @@ function EqualityExpression(node: BinaryExpression): RuleExpression<CompletionRe
 
     const paramValues = new ParamValues(node);
 
-    return call(new RuleFunction([], [
+    return inNewScope([
         ...paramValues.statements,
         new RuleReturn(result)
-    ]), [], () => {
+    ], () => {
         return types.builders.binaryExpression(node.operator, paramValues.left(), paramValues.right());
     });
 }

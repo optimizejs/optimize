@@ -2,9 +2,9 @@ import {Program, Statement} from 'estree';
 import {types} from 'recast';
 import {toRule, toStatement} from '../../RuleMapper';
 import {CompletionRecord} from '../domain/CompletionRecords';
-import {call, RuleCallExpression} from '../rules/Basic';
+import {RuleCallExpression} from '../rules/Basic';
 import {RuleExpression} from '../rules/RuleExpression';
-import {RuleFunction, RuleLetStatement, RuleStatement} from '../rules/RuleStatements';
+import {inNewScope, RuleLetStatement, RuleStatement} from '../rules/RuleStatements';
 
 export function Program(node: Program): RuleExpression<CompletionRecord> {
     const statements: RuleStatement[] = [];
@@ -12,9 +12,7 @@ export function Program(node: Program): RuleExpression<CompletionRecord> {
         statements.push(new RuleLetStatement('sl', toRule(stmnt)));
     }
 
-    return call(new RuleFunction([],
-        statements
-    ), []);
+    return inNewScope(statements);
 }
 
 export function createProgram(rule: RuleExpression<CompletionRecord>): Program | null {

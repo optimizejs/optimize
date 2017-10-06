@@ -4,6 +4,7 @@ import {BinaryExpression} from './semantic/nodes/BinaryExpression';
 import {createExpressionStatement, ExpressionStatement} from './semantic/nodes/ExpressionStatement';
 import {IfStatement} from './semantic/nodes/IfStatement';
 import {createLiteral, Literal} from './semantic/nodes/Literal';
+import {LogicalExpression} from './semantic/nodes/LogicalExpression';
 import {createProgram, Program} from './semantic/nodes/Program';
 import {ThrowStatement} from './semantic/nodes/ThrowStatement';
 import {RuleExpression} from './semantic/rules/RuleExpression';
@@ -17,6 +18,7 @@ const ruleMap: { [type: string]: RuleMapping } = {
     ExpressionStatement,
     IfStatement,
     Literal,
+    LogicalExpression,
     Program,
     ThrowStatement
 };

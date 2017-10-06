@@ -1,5 +1,5 @@
 import {CompletionRecord} from '../domain/CompletionRecords';
-import {RuleConstantExpression} from './Basic';
+import {BackMapper, call, RuleConstantExpression} from './Basic';
 import {Evaluation} from './Evaluation';
 import {Executable} from './Executable';
 import {Optimized} from './Optimized';
@@ -61,6 +61,10 @@ export class RuleFunction {
             () => new RuleFunction(this.paramNames, statements.map(statement => statement.get()))
         );
     }
+}
+
+export function inNewScope(statements: RuleStatement[], backMapper?: BackMapper): RuleExpression<CompletionRecord> {
+    return call(new RuleFunction([], statements), [], backMapper);
 }
 
 export abstract class RuleStatement implements Executable<RuleStatement> {
@@ -125,8 +129,8 @@ export class RuleReturn extends RuleStatement {
 }
 
 export class RuleIfStatement extends RuleStatement {
-    constructor(private test: RuleExpression<boolean>, private consequent: RuleStatement,
-                private alternate: RuleStatement) {
+    constructor(readonly test: RuleExpression<boolean>, private consequent: RuleStatement,
+                readonly alternate: RuleStatement) {
 
         super();
     }

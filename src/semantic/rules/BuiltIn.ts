@@ -14,6 +14,18 @@ export function toNumber(param: RuleExpression<JSValue>): RuleExpression<Complet
     }));
 }
 
+export function toBoolean(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
+    return new RuleUnaryExpression(param, new SimpleUnaryCalculator(arg => {
+        let result;
+        if (arg instanceof PrimitiveValue) {
+            result = !!(arg.value as any);
+        } else {
+            result = true;
+        }
+        return new NormalCompletionRecord(new PrimitiveValue(result));
+    }));
+}
+
 export function toPrimitive(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
     return new RuleUnaryExpression(param, new SimpleUnaryCalculator(arg => {
         if (arg instanceof PrimitiveValue) {

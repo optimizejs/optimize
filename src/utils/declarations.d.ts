@@ -3,7 +3,16 @@ type literalable = boolean | string | number | null;
 type primitive = literalable | void | symbol;
 
 declare module 'recast' {
-    import {BinaryExpression, Expression, ExpressionStatement, Literal, Node, Program, Statement} from 'estree';
+    import {
+        BinaryExpression,
+        Expression,
+        ExpressionStatement,
+        Literal,
+        LogicalExpression,
+        Node,
+        Program,
+        Statement
+    } from 'estree';
 
     interface PrintResult {
         code: string;
@@ -19,6 +28,8 @@ declare module 'recast' {
         expressionStatement(expression: Expression): ExpressionStatement;
 
         literal(value: primitive | RegExp): Literal;
+
+        logicalExpression(operator: string, left: Expression, right: Expression): LogicalExpression;
 
         program(statements: Statement[]): Program;
 

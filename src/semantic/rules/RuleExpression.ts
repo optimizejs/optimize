@@ -29,7 +29,7 @@ export const notImplementedUnaryCalculator = new SimpleUnaryCalculator(() => {
 });
 
 export class RuleUnaryExpression<A, T> extends RuleExpression<T> {
-    constructor(readonly argument: RuleExpression<A>, private calculator: UnaryCalculator<A, T>) {
+    constructor(readonly argument: RuleExpression<A>, readonly calculator: UnaryCalculator<A, T>) {
         super();
     }
 
