@@ -11,6 +11,6 @@ true;
 false;
 false;
 /a/ == 0;
-/a/ === 0;
+false;
 /a/ != 0;
-/a/ !== 0;
+true;

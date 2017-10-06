@@ -28,8 +28,8 @@ export const notImplementedUnaryCalculator = new SimpleUnaryCalculator(() => {
     throw new Error('Not implemented!');
 });
 
-export class RuleUnaryExpression<A, T> extends RuleExpression<T> {
-    constructor(readonly argument: RuleExpression<A>, readonly calculator: UnaryCalculator<A, T>) {
+export abstract class RuleAbstractUnaryExpression<A, T> extends RuleExpression<T> {
+    constructor(protected argument: RuleExpression<A>) {
         super();
     }
 
@@ -37,9 +37,62 @@ export class RuleUnaryExpression<A, T> extends RuleExpression<T> {
         const optimizedArg = this.argument.execute(evaluation, confident);
         const x = optimizedArg.get();
         if (x instanceof RuleConstantExpression) {
-            return Optimized.optimized(constant(this.calculator.calculate(x.value as A)));
+            return this.calculate(x.value);
         }
-        return optimizedArg.wrapIfOptimized(this, arg => new RuleUnaryExpression(arg, this.calculator));
+        return optimizedArg.wrapIfOptimized(this, arg => this.copy(arg));
+    }
+
+    protected abstract calculate(arg: A): Optimized<RuleExpression<T>>;
+
+    protected abstract copy(arg: RuleExpression<A>): RuleAbstractUnaryExpression<A, T>;
+}
+
+export class RuleUnaryExpression<A, T> extends RuleAbstractUnaryExpression<A, T> {
+    constructor(argument: RuleExpression<A>, readonly calculator: UnaryCalculator<A, T>) {
+        super(argument);
+    }
+
+    protected calculate(arg: A): Optimized<RuleExpression<T>> {
+        return Optimized.optimized(constant(this.calculator.calculate(arg)));
+    }
+
+    protected copy(arg: RuleExpression<A>): RuleUnaryExpression<A, T> {
+        return new RuleUnaryExpression(arg, this.calculator);
+    }
+}
+
+abstract class RuleAbstractBinaryExpression<L, R, T> extends RuleExpression<T> {
+    constructor(private left: RuleExpression<L>, private right: RuleExpression<R>) {
+        super();
+    }
+
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>> {
+        const optimizedLeft = this.left.execute(evaluation, confident);
+        const optimizedRight = this.right.execute(evaluation, confident);
+        const left = optimizedLeft.get();
+        const right = optimizedRight.get();
+        if (left instanceof RuleConstantExpression && right instanceof RuleConstantExpression) {
+            return this.calculate(left.value as L, right.value as R);
+        }
+        return Optimized.wrapIfOptimized(
+            [optimizedLeft, optimizedRight],
+            this,
+            () => this.copy(left, right)
+        );
+    }
+
+    protected abstract calculate(left: L, right: R): Optimized<RuleExpression<T>>;
+
+    protected abstract copy(left: RuleExpression<L>, right: RuleExpression<R>): RuleAbstractBinaryExpression<L, R, T>;
+}
+
+export class UnknownBinaryExpression<T> extends RuleAbstractBinaryExpression<any, any, T> {
+    protected calculate(left: any, right: any): Optimized<RuleExpression<T>> {
+        return Optimized.original(this);
+    }
+
+    protected copy(left: RuleExpression<any>, right: RuleExpression<any>): RuleAbstractBinaryExpression<any, any, T> {
+        return new UnknownBinaryExpression(left, right);
     }
 }
 
@@ -52,25 +105,18 @@ export class SimpleBinaryCalculator<L, R, T> implements BinaryCalculator<L, R, T
     }
 }
 
-export class RuleBinaryExpression<L, R, T> extends RuleExpression<T> {
-    constructor(readonly left: RuleExpression<L>, readonly right: RuleExpression<R>,
+export class RuleBinaryExpression<L, R, T> extends RuleAbstractBinaryExpression<L, R, T> {
+    constructor(left: RuleExpression<L>, right: RuleExpression<R>,
                 readonly calculator: BinaryCalculator<L, R, T>) {
-        super();
+        super(left, right);
     }
 
-    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>> {
-        const optimizedLeft = this.left.execute(evaluation, confident);
-        const optimizedRight = this.right.execute(evaluation, confident);
-        const left = optimizedLeft.get();
-        const right = optimizedRight.get();
-        if (left instanceof RuleConstantExpression && right instanceof RuleConstantExpression) {
-            return Optimized.optimized(constant(this.calculator.calculate(left.value as L, right.value as R)));
-        }
-        return Optimized.wrapIfOptimized(
-            [optimizedLeft, optimizedRight],
-            this,
-            () => new RuleBinaryExpression(left, right, this.calculator)
-        );
+    protected calculate(left: L, right: R): Optimized<RuleExpression<T>> {
+        return Optimized.optimized(constant(this.calculator.calculate(left, right)));
+    }
+
+    protected copy(left: RuleExpression<L>, right: RuleExpression<R>): RuleAbstractBinaryExpression<L, R, T> {
+        return new RuleBinaryExpression(left, right, this.calculator);
     }
 }
 

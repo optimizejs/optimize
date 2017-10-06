@@ -20,7 +20,7 @@ import {
 } from '../domain/Reference';
 import {and, call, readVariable, same} from './Basic';
 import {referenceError} from './BuiltIn';
-import {RuleBinaryExpression, RuleExpression, SimpleBinaryCalculator} from './RuleExpression';
+import {RuleBinaryExpression, RuleExpression, SimpleBinaryCalculator, UnknownBinaryExpression} from './RuleExpression';
 import {
     RuleBlockStatement,
     RuleEmptyStatement,
@@ -101,12 +101,10 @@ const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [
         new RuleIfStatement(
             and(isPrimitive(readVariable('x')), isPrimitive(readVariable('y'))),
             new RuleReturn(normalCompletion(primitiveEqualityComparison(readVariable('x'), readVariable('y')))),
-            new RuleReturn(new RuleBinaryExpression(
+            new RuleReturn(new UnknownBinaryExpression(
                 readVariable('x'),
-                readVariable('y'),
-                new SimpleBinaryCalculator(() => {
-                    throw new Error('Not implemented!');
-                })))
+                readVariable('y')
+            ))
         )
     )
 ]);

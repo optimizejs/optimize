@@ -1,3 +1,4 @@
+import {constant} from '../../rules/Basic';
 import {Evaluation} from '../../rules/Evaluation';
 import {Optimized} from '../../rules/Optimized';
 import {RuleExpression} from '../../rules/RuleExpression';
@@ -6,6 +7,10 @@ import {JSValue, Type} from './JSValue';
 
 export class ObjectValue extends JSValue {
     objectValue: true;
+
+    constructor(readonly payload: any) {
+        super();
+    }
 
     getType(): Type {
         return Type.OBJECT;
@@ -18,7 +23,7 @@ export class RuleNewObjectExpression<T> extends RuleExpression<ObjectValue> {
     }
 
     execute(evaluation: Evaluation): Optimized<RuleExpression<ObjectValue>> {
-        return Optimized.original(this);
+        return Optimized.optimized(constant(new ObjectValue(this.payload)));
     }
 }
 
