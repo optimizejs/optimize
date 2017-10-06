@@ -1,6 +1,6 @@
 import {Expression, Node, Program as IProgram, Statement} from 'estree';
 import {CompletionRecord} from './semantic/domain/CompletionRecords';
-import {BinaryExpression, createBinaryExpression} from './semantic/nodes/BinaryExpression';
+import {BinaryExpression} from './semantic/nodes/BinaryExpression';
 import {createExpressionStatement, ExpressionStatement} from './semantic/nodes/ExpressionStatement';
 import {IfStatement} from './semantic/nodes/IfStatement';
 import {createLiteral, Literal} from './semantic/nodes/Literal';
@@ -22,7 +22,6 @@ const ruleMap: { [type: string]: RuleMapping } = {
 };
 
 const expressionMap: BackMapper<Expression>[] = [
-    createBinaryExpression,
     createLiteral
 ];
 
@@ -53,6 +52,10 @@ export function toProgram(rule: RuleExpression<CompletionRecord>): IProgram {
 }
 
 function toNode<T extends Node>(rule: RuleExpression<CompletionRecord>, map: BackMapper<T>[]): T {
+    if (rule.mapper) {
+        return rule.mapper() as T;
+    }
+
     for (const mapper of map) {
         const result = mapper(rule);
         if (result !== null) {

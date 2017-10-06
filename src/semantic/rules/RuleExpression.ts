@@ -1,11 +1,16 @@
-import {Node} from 'estree';
-import {constant, RuleConstantExpression} from './Basic';
+import {Expression, Node} from 'estree';
+import {toExpression} from '../../RuleMapper';
+import {CompletionRecord} from '../domain/CompletionRecords';
+import {BackMapper, constant, RuleConstantExpression} from './Basic';
 import {Evaluation} from './Evaluation';
 import {Executable} from './Executable';
 import {Optimized} from './Optimized';
 
 export abstract class RuleExpression<T> implements Executable<RuleExpression<T>> {
     original: Node;
+
+    constructor(readonly mapper?: BackMapper) {
+    }
 
     abstract execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>>;
 }
@@ -67,4 +72,29 @@ export class RuleBinaryExpression<L, R, T> extends RuleExpression<T> {
             () => new RuleBinaryExpression(left, right, this.calculator)
         );
     }
+}
+
+export class TrackOptimizedExpression extends RuleExpression<CompletionRecord> {
+    private wrapped: RuleExpression<CompletionRecord>;
+
+    constructor(private argument: RuleExpression<CompletionRecord>) {
+        super();
+        this.wrapped = argument;
+    }
+
+    execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<CompletionRecord>> {
+        const optimized = this.argument.execute(evaluation, confident);
+        if (optimized.isOptimized()) {
+            this.wrapped = optimized.get();
+        }
+        return optimized;
+    }
+
+    toNode(): Expression {
+        return toExpression(this.wrapped);
+    }
+}
+
+export function trackOptimized(argument: RuleExpression<CompletionRecord>): TrackOptimizedExpression {
+    return new TrackOptimizedExpression(argument);
 }

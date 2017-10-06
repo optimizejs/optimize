@@ -1,3 +1,4 @@
+import {Node} from 'estree';
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {Evaluation} from './Evaluation';
 import {Optimized} from './Optimized';
@@ -14,9 +15,11 @@ export class RuleConstantExpression<T> extends RuleExpression<T> {
     }
 }
 
+export type BackMapper = () => Node;
+
 export class RuleCallExpression extends RuleExpression<CompletionRecord> {
-    constructor(readonly fn: RuleFunction, readonly parameters: RuleExpression<any>[]) {
-        super();
+    constructor(readonly fn: RuleFunction, readonly parameters: RuleExpression<any>[], mapper?: BackMapper) {
+        super(mapper);
     }
 
     execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<CompletionRecord>> {
@@ -34,7 +37,7 @@ export class RuleCallExpression extends RuleExpression<CompletionRecord> {
         return Optimized.wrapIfOptimized(
             [...optimizedParams, optimizedFn],
             this,
-            () => new RuleCallExpression(optimizedFn.get(), params)
+            () => new RuleCallExpression(optimizedFn.get(), params, this.mapper)
         );
     }
 }
@@ -52,8 +55,10 @@ class RuleReadVariableExpression extends RuleExpression<any> {
     }
 }
 
-export function call(fn: RuleFunction, parameters: RuleExpression<any>[]): RuleExpression<CompletionRecord> {
-    return new RuleCallExpression(fn, parameters);
+export function call(fn: RuleFunction, parameters: RuleExpression<any>[],
+                     backMapper?: BackMapper): RuleExpression<CompletionRecord> {
+
+    return new RuleCallExpression(fn, parameters, backMapper);
 }
 
 export function readVariable(variable: string): RuleExpression<any> {

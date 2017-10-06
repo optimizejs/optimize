@@ -1,10 +1,10 @@
 import {BinaryExpression, Expression} from 'estree';
 import {types} from 'recast';
-import {toExpression, toRule} from '../../RuleMapper';
+import {toRule} from '../../RuleMapper';
 import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../domain/CompletionRecords';
 import {getType, Type} from '../domain/js/JSValue';
 import {Prim, PrimExpr, PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {call, constant, or, readVariable, RuleCallExpression, RuleConstantExpression, same} from '../rules/Basic';
+import {call, constant, or, readVariable, same} from '../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../rules/BuiltIn';
 import {equals, getValue, strictEquals} from '../rules/Others';
 import {
@@ -12,7 +12,9 @@ import {
     RuleBinaryExpression,
     RuleExpression,
     RuleUnaryExpression,
-    SimpleUnaryCalculator
+    SimpleUnaryCalculator,
+    trackOptimized,
+    TrackOptimizedExpression
 } from '../rules/RuleExpression';
 import {
     RuleBlockStatement,
@@ -64,18 +66,36 @@ function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleBinaryExpress
     return new RuleBinaryExpression(l, r, new JSBinaryCalculator(operator));
 }
 
-function getParameterValues(node: BinaryExpression): RuleStatement[] {
-    return [
-        new RuleLetStatement('leftValue', getValue(toRule(node.left))),
-        returnIfAbrupt('leftValue'),
-        new RuleLetStatement('rightValue', getValue(toRule(node.right))),
-        returnIfAbrupt('rightValue')
-    ];
+class ParamValues {
+    readonly statements: RuleStatement[];
+    private leftRule: TrackOptimizedExpression;
+    private rightRule: TrackOptimizedExpression;
+
+    constructor(node: BinaryExpression) {
+        this.leftRule = trackOptimized(toRule(node.left));
+        this.rightRule = trackOptimized(toRule(node.right));
+        this.statements = [
+            new RuleLetStatement('leftValue', getValue(this.leftRule)),
+            returnIfAbrupt('leftValue'),
+            new RuleLetStatement('rightValue', getValue(this.rightRule)),
+            returnIfAbrupt('rightValue')
+        ];
+    }
+
+    left(): Expression {
+        return this.leftRule.toNode();
+    }
+
+    right(): Expression {
+        return this.rightRule.toNode();
+    }
 }
 
 function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
+    const paramValues = new ParamValues(node);
+
     return call(new RuleFunction([], [
-        ...getParameterValues(node),
+        ...paramValues.statements,
         new RuleLetStatement('lprim', toPrimitive(readVariable('leftValue'))),
         returnIfAbrupt('lprim'),
         new RuleLetStatement('rprim', toPrimitive(readVariable('rightValue'))),
@@ -108,12 +128,15 @@ function AdditionExpression(node: BinaryExpression): RuleExpression<CompletionRe
                 )))
             ])
         )
-    ]), []);
+    ]), [], () => {
+        return types.builders.binaryExpression('+', paramValues.left(), paramValues.right());
+    });
 }
 
 function NumberBinaryExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
+    const paramValues = new ParamValues(node);
     return call(new RuleFunction([], [
-        ...getParameterValues(node),
+        ...paramValues.statements,
         new RuleLetStatement('lnum', toNumber(readVariable('leftValue'))),
         returnIfAbrupt('lnum'),
         new RuleLetStatement('rnum', toNumber(readVariable('rightValue'))),
@@ -123,7 +146,9 @@ function NumberBinaryExpression(node: BinaryExpression): RuleExpression<Completi
             readVariable('lnum'),
             readVariable('rnum')
         )))
-    ]), []);
+    ]), [], () => {
+        return types.builders.binaryExpression(node.operator, paramValues.left(), paramValues.right());
+    });
 }
 
 function negate(expression: RuleExpression<CompletionRecord>): RuleExpression<CompletionRecord> {
@@ -143,65 +168,12 @@ function EqualityExpression(node: BinaryExpression): RuleExpression<CompletionRe
     const eqResult = eq(readVariable('leftValue'), readVariable('rightValue'));
     const result = node.operator[0] === '!' ? negate(eqResult) : eqResult;
 
+    const paramValues = new ParamValues(node);
+
     return call(new RuleFunction([], [
-        ...getParameterValues(node),
+        ...paramValues.statements,
         new RuleReturn(result)
-    ]), []);
-}
-
-export function createBinaryExpression(rule: RuleExpression<CompletionRecord>): BinaryExpression | null {
-    if (!(rule instanceof RuleCallExpression) || rule.parameters.length !== 0) {
-        return null;
-    }
-    const fn = rule.fn;
-
-    if (fn.body.length === 5) {
-        const ret = fn.body[4];
-        if (ret instanceof RuleReturn) {
-            let expression = ret.expression;
-
-            let negated = false;
-            if (expression instanceof RuleCallExpression && expression.fn.body.length === 2) {
-                negated = true;
-                expression = expression.parameters[0];
-            }
-
-            let operator;
-            if (expression instanceof RuleCallExpression) {
-                operator = '==';
-            } else {
-                operator = '===';
-            }
-            if (negated) {
-                operator = '!' + operator.substring(1);
-            }
-            return types.builders.binaryExpression(operator, extract(fn.body[0]), extract(fn.body[2]));
-        }
-    }
-
-    if (fn.body.length === 9) {
-        const ret = fn.body[8];
-        if (ret instanceof RuleReturn && ret.expression instanceof RuleUnaryExpression) {
-            const mul = ret.expression.argument;
-            if (mul instanceof RuleBinaryExpression && mul.calculator instanceof JSBinaryCalculator) {
-
-                const left = extract(fn.body[0]);
-                const right = extract(fn.body[2]);
-
-                return types.builders.binaryExpression(mul.calculator.operator, left, right);
-            }
-        } else if (ret instanceof RuleIfStatement) { // + operator
-            return types.builders.binaryExpression('+', extract(fn.body[0]), extract(fn.body[2]));
-        }
-    }
-    return null;
-}
-
-function extract(p: any): Expression {
-    const expression = (p as RuleLetStatement).expression;
-    if (expression instanceof RuleConstantExpression) {
-        return toExpression(expression);
-    } else {
-        return toExpression((expression as RuleCallExpression).parameters[0]);
-    }
+    ]), [], () => {
+        return types.builders.binaryExpression(node.operator, paramValues.left(), paramValues.right());
+    });
 }
