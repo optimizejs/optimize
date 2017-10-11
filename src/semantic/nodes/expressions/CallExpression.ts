@@ -1,0 +1,16 @@
+import {SimpleCallExpression} from 'estree';
+import {types} from 'recast';
+import {toRule} from '../../../RuleMapper';
+import {CompletionRecord} from '../../domain/CompletionRecords';
+import {getValue} from '../../rules/Others';
+import {RuleExpression, trackOptimized} from '../../rules/RuleExpression';
+import {inNewScope, RuleLetStatement} from '../../rules/RuleStatements';
+
+export function CallExpression(node: SimpleCallExpression): RuleExpression<CompletionRecord> {
+    const callee = trackOptimized(toRule(node.callee));
+    const args = node.arguments.map(arg => trackOptimized(toRule(arg)));
+    return inNewScope([
+        new RuleLetStatement('func', getValue(callee)),
+        ...args.map(arg => new RuleLetStatement('arg', getValue(arg)))
+    ], () => types.builders.callExpression(callee.toExpression(), args.map(arg => arg.toExpression()))); // TODO
+}

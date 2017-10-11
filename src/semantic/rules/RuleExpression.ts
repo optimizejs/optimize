@@ -1,5 +1,5 @@
-import {Expression, Node} from 'estree';
-import {toExpression} from '../../RuleMapper';
+import {Expression, Node, Statement} from 'estree';
+import {toExpression, toNodeByMapper, toStatement} from '../../RuleMapper';
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {Evaluation} from './Evaluation';
 import {Executable} from './Executable';
@@ -147,8 +147,16 @@ export class TrackOptimizedExpression extends RuleExpression<CompletionRecord> {
         return optimized;
     }
 
-    toNode(): Expression {
+    toNode<T extends Node>(): T {
+        return toNodeByMapper(this.wrapped) as T;
+    }
+
+    toExpression(): Expression {
         return toExpression(this.wrapped);
+    }
+
+    toStatement(): Statement {
+        return toStatement(this.wrapped);
     }
 }
 

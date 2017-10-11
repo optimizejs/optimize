@@ -22,5 +22,5 @@ export function LogicalExpression(node: LogicalExpression): RuleExpression<Compl
             new RuleReturn(normalCompletion(readVariable('lval'))),
             new RuleReturn(getValue(rightRule))
         )
-    ], () => types.builders.logicalExpression(node.operator, leftRule.toNode(), rightRule.toNode()));
+    ], () => types.builders.logicalExpression(node.operator, leftRule.toExpression(), rightRule.toExpression()));
 }

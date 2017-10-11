@@ -21,7 +21,7 @@ export class NormalCompletionRecord extends CompletionRecord {
 }
 
 export class ThrowCompletionRecord extends CompletionRecord {
-    constructor(private value: JSValue) {
+    constructor(readonly value: JSValue) {
         super();
     }
 }
@@ -62,8 +62,8 @@ export function throwCompletion(value: RuleExpression<JSValue>): RuleExpression<
     return new RuleUnaryExpression(value, new SimpleUnaryCalculator(arg => new ThrowCompletionRecord(arg)));
 }
 
-export function isEmptyValue(v: RuleExpression<JSValue | Empty>): RuleExpression<boolean> {
-    throw new Error('not implemented yet');
+export function isEmptyValue(value: RuleExpression<JSValue | Empty>): RuleExpression<boolean> {
+    return new RuleUnaryExpression(value, new SimpleUnaryCalculator(arg => arg === EMPTY));
 }
 
 export function returnIfAbrupt(variableName: string): RuleStatement {

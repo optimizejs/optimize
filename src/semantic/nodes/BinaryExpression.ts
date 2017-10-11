@@ -47,7 +47,7 @@ export function BinaryExpression(node: BinaryExpression): RuleExpression<Complet
         case '!==':
             return EqualityExpression(node);
         default:
-            throw new Error('Unsupported operator: ' + node.operator);
+            return UnsupportedBinaryExpression(node);
     }
 }
 
@@ -84,11 +84,11 @@ class ParamValues {
     }
 
     left(): Expression {
-        return this.leftRule.toNode();
+        return this.leftRule.toExpression();
     }
 
     right(): Expression {
-        return this.rightRule.toNode();
+        return this.rightRule.toExpression();
     }
 }
 
@@ -176,5 +176,16 @@ function EqualityExpression(node: BinaryExpression): RuleExpression<CompletionRe
         new RuleReturn(result)
     ], () => {
         return types.builders.binaryExpression(node.operator, paramValues.left(), paramValues.right());
+    });
+}
+
+function UnsupportedBinaryExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
+    const left = trackOptimized(toRule(node.left));
+    const right = trackOptimized(toRule(node.right));
+    return inNewScope([
+        new RuleLetStatement('left', left),
+        new RuleLetStatement('right', right)
+    ], () => {
+        return types.builders.binaryExpression(node.operator, left.toExpression(), right.toExpression());
     });
 }
