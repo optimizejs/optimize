@@ -19,7 +19,11 @@ export class Evaluation {
 
     read(variable: string): any {
         if (this.has(variable)) {
-            return this.variables[variable].value;
+            const variableValue = this.variables[variable];
+            if (!variableValue.known) {
+                throw new Error('Unknown value: ' + variable);
+            }
+            return variableValue.value;
         }
         return (this.parent as Evaluation).read(variable);
     }
@@ -30,17 +34,27 @@ export class Evaluation {
         }
         return (this.parent as Evaluation).isKnownValue(variable);
     }
+
     sub(): Evaluation {
         return new Evaluation(this);
     }
 
     merge(sub1: Evaluation, sub2: Evaluation): void {
+        /* tslint:disable-next-line */
         for (const variable in sub1.variables) {
-            if (sub2.has(variable)) {
+            if (sub1.isKnownValue(variable) && sub2.has(variable) && sub2.isKnownValue(variable)) {
                 const value = sub1.read(variable);
                 if (equals(value, sub2.read(variable))) {
                     this.assign(variable, value);
+                    continue;
                 }
+            }
+            this.assignUnknown(variable);
+        }
+
+        for (const variable in sub2.variables) {
+            if (!sub1.has(variable)) {
+                this.assignUnknown(variable);
             }
         }
     }
