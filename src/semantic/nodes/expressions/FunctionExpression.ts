@@ -1,4 +1,4 @@
-import {BlockStatement, FunctionExpression} from 'estree';
+import {ArrowFunctionExpression, BlockStatement, FunctionExpression} from 'estree';
 import {types} from 'recast';
 import {toRule} from '../../../RuleMapper';
 import {CompletionRecord} from '../../domain/CompletionRecords';
@@ -10,10 +10,29 @@ export function FunctionExpression(node: FunctionExpression): RuleExpression<Com
     const params = node.params.map(param => trackOptimized(toRule(param)));
     const body = trackOptimized(toRule(node.body));
     return inNewScope([
+        ...params.map(p => new RuleLetStatement('p', p)),
         new RuleLetStatement('b', getValue(body))
     ], () => types.builders.functionExpression(
         node.id ? node.id : null,
         params.map(param => param.toExpression()),
-        body.toStatement() as BlockStatement
+        body.toStatement() as BlockStatement,
+        node.generator as boolean
     )); // TODO
+}
+
+export function ArrowFunctionExpression(node: ArrowFunctionExpression): RuleExpression<CompletionRecord> {
+    const params = node.params.map(param => trackOptimized(toRule(param)));
+    const body = trackOptimized(toRule(node.body));
+    return inNewScope([
+        ...params.map(p => new RuleLetStatement('p', p)),
+        new RuleLetStatement('b', getValue(body))
+    ], () => {
+        const expression = node.expression;
+        const paramExpressions = params.map(param => param.toExpression());
+        if (expression) {
+            return types.builders.arrowFunctionExpression(paramExpressions, body.toExpression(), true);
+        } else {
+            return types.builders.arrowFunctionExpression(paramExpressions, body.toNode(), false);
+        }
+    }); // TODO
 }

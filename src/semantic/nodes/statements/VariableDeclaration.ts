@@ -14,9 +14,12 @@ export function VariableDeclaration(node: VariableDeclaration): RuleExpression<C
 }
 
 export function VariableDeclarator(node: VariableDeclarator): RuleExpression<CompletionRecord> {
+    const id = trackOptimized(toRule(node.id));
     const init = node.init ? trackOptimized(toRule(node.init)) : null;
-    return inNewScope(
-        init ? [new RuleLetStatement('d', init)] : [],
-        () => types.builders.variableDeclarator(node.id, init ? init.toExpression() : null)
+    return inNewScope([
+            new RuleLetStatement('i', id),
+            ...init ? [new RuleLetStatement('d', init)] : []
+        ],
+        () => types.builders.variableDeclarator(id.toNode(), init ? init.toExpression() : null)
     ); // TODO
 }

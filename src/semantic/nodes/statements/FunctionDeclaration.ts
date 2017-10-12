@@ -10,10 +10,12 @@ export function FunctionDeclaration(node: FunctionDeclaration): RuleExpression<C
     const params = node.params.map(param => trackOptimized(toRule(param)));
     const body = trackOptimized(toRule(node.body));
     return inNewScope([
+        ...params.map(p => new RuleLetStatement('p', p)),
         new RuleLetStatement('b', getValue(body))
     ], () => types.builders.functionDeclaration(
         node.id,
         params.map(param => param.toExpression()),
-        body.toStatement() as BlockStatement
+        body.toStatement() as BlockStatement,
+        node.generator as boolean
     )); // TODO
 }
