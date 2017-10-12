@@ -4,8 +4,7 @@ import {isLiteralable} from '../../utils/Utils';
 import {CompletionRecord, normalCompletion, NormalCompletionRecord} from '../domain/CompletionRecords';
 import {newObject, ObjectValue} from '../domain/js/ObjectValue';
 import {PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {constant, RuleConstantExpression} from '../rules/Basic';
-import {RuleExpression, RuleUnaryExpression} from '../rules/RuleExpression';
+import {constant, RuleConstantExpression, RuleExpression} from '../rules/RuleExpression';
 
 class RegExpCreation {
     constructor(readonly pattern: string, readonly flags: string) {

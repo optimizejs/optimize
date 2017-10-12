@@ -1,10 +1,11 @@
 import {Expression, Node} from 'estree';
 import {toExpression} from '../../RuleMapper';
 import {CompletionRecord} from '../domain/CompletionRecords';
-import {BackMapper, constant, RuleConstantExpression} from './Basic';
 import {Evaluation} from './Evaluation';
 import {Executable} from './Executable';
 import {Optimized} from './Optimized';
+
+export type BackMapper = () => Node;
 
 export abstract class RuleExpression<T> implements Executable<RuleExpression<T>> {
     original: Node;
@@ -13,6 +14,16 @@ export abstract class RuleExpression<T> implements Executable<RuleExpression<T>>
     }
 
     abstract execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>>;
+}
+
+export class RuleConstantExpression<T> extends RuleExpression<T> {
+    constructor(readonly value: T) {
+        super();
+    }
+
+    execute(evaluation: Evaluation): Optimized<RuleExpression<T>> {
+        return Optimized.original(this);
+    }
 }
 
 export interface UnaryCalculator<A, T> {
@@ -143,4 +154,8 @@ export class TrackOptimizedExpression extends RuleExpression<CompletionRecord> {
 
 export function trackOptimized(argument: RuleExpression<CompletionRecord>): TrackOptimizedExpression {
     return new TrackOptimizedExpression(argument);
+}
+
+export function constant<T>(value: T): RuleExpression<T> {
+    return new RuleConstantExpression(value);
 }

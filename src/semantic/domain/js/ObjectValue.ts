@@ -1,7 +1,6 @@
-import {constant} from '../../rules/Basic';
 import {Evaluation} from '../../rules/Evaluation';
 import {Optimized} from '../../rules/Optimized';
-import {RuleExpression} from '../../rules/RuleExpression';
+import {constant, RuleExpression} from '../../rules/RuleExpression';
 import {CompletionRecord} from '../CompletionRecords';
 import {JSValue, Type} from './JSValue';
 

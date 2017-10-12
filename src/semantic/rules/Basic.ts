@@ -1,21 +1,14 @@
-import {Node} from 'estree';
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {Evaluation} from './Evaluation';
 import {Optimized} from './Optimized';
-import {RuleBinaryExpression, RuleExpression, SimpleBinaryCalculator} from './RuleExpression';
+import {
+    BackMapper,
+    RuleBinaryExpression,
+    RuleConstantExpression,
+    RuleExpression,
+    SimpleBinaryCalculator
+} from './RuleExpression';
 import {RuleFunction, RuleReturn} from './RuleStatements';
-
-export class RuleConstantExpression<T> extends RuleExpression<T> {
-    constructor(readonly value: T) {
-        super();
-    }
-
-    execute(evaluation: Evaluation): Optimized<RuleExpression<T>> {
-        return Optimized.original(this);
-    }
-}
-
-export type BackMapper = () => Node;
 
 export class RuleCallExpression extends RuleExpression<CompletionRecord> {
     constructor(readonly fn: RuleFunction, readonly parameters: RuleExpression<any>[], mapper?: BackMapper) {
@@ -75,8 +68,4 @@ export function and(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolea
 
 export function same<T>(x: RuleExpression<T>, y: RuleExpression<T>): RuleExpression<boolean> {
     return new RuleBinaryExpression(x, y, new SimpleBinaryCalculator((l, r) => l === r));
-}
-
-export function constant<T>(value: T): RuleExpression<T> {
-    return new RuleConstantExpression(value);
 }

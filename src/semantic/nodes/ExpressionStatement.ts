@@ -2,9 +2,9 @@ import {ExpressionStatement} from 'estree';
 import {types} from 'recast';
 import {toExpression, toRule} from '../../RuleMapper';
 import {CompletionRecord} from '../domain/CompletionRecords';
-import {call, RuleConstantExpression} from '../rules/Basic';
+import {call} from '../rules/Basic';
 import {GET_VALUE} from '../rules/Others';
-import {RuleExpression, trackOptimized} from '../rules/RuleExpression';
+import {RuleConstantExpression, RuleExpression, trackOptimized} from '../rules/RuleExpression';
 
 export function ExpressionStatement(node: ExpressionStatement): RuleExpression<CompletionRecord> {
     const expression = trackOptimized(toRule(node.expression));

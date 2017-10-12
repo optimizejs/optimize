@@ -4,11 +4,11 @@ import {toRule} from '../../RuleMapper';
 import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../domain/CompletionRecords';
 import {getType, Type} from '../domain/js/JSValue';
 import {Prim, PrimExpr, PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {call, constant, or, readVariable, same} from '../rules/Basic';
+import {call, or, readVariable, same} from '../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../rules/BuiltIn';
 import {equals, getValue, strictEquals} from '../rules/Others';
 import {
-    BinaryCalculator,
+    BinaryCalculator, constant,
     RuleBinaryExpression,
     RuleExpression,
     RuleUnaryExpression,

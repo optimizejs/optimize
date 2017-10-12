@@ -1,5 +1,5 @@
-import {constant, readVariable} from '../rules/Basic';
-import {RuleExpression, RuleUnaryExpression, SimpleUnaryCalculator} from '../rules/RuleExpression';
+import {readVariable} from '../rules/Basic';
+import {constant, RuleExpression, RuleUnaryExpression, SimpleUnaryCalculator} from '../rules/RuleExpression';
 import {RuleIfStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../rules/RuleStatements';
 import {JSValue} from './js/JSValue';
 import {Label} from './Label';

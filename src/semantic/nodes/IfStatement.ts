@@ -8,9 +8,9 @@ import {
     returnIfAbrupt
 } from '../domain/CompletionRecords';
 import {is, PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {constant, readVariable} from '../rules/Basic';
+import {readVariable} from '../rules/Basic';
 import {getValue} from '../rules/Others';
-import {RuleExpression} from '../rules/RuleExpression';
+import {constant, RuleExpression} from '../rules/RuleExpression';
 import {inNewScope, RuleIfStatement, RuleLetStatement, RuleReturn} from '../rules/RuleStatements';
 
 export function IfStatement(node: IfStatement): RuleExpression<CompletionRecord> {

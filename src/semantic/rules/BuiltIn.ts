@@ -2,9 +2,9 @@ import {CompletionRecord, NormalCompletionRecord} from '../domain/CompletionReco
 import {JSValue} from '../domain/js/JSValue';
 import {newObject, ObjectValue} from '../domain/js/ObjectValue';
 import {PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {constant} from './Basic';
 import {Optimized} from './Optimized';
 import {
+    constant,
     RuleAbstractUnaryExpression,
     RuleExpression,
     RuleUnaryExpression,
