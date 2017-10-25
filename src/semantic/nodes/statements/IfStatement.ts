@@ -1,18 +1,18 @@
 import {IfStatement} from 'estree';
 import {types} from 'recast';
-import {toRule} from '../../RuleMapper';
+import {toRule} from '../../../RuleMapper';
 import {
     CompletionRecord,
     EMPTY_COMPLETION,
     isEmptyValue,
     normalCompletion,
     returnIfAbrupt
-} from '../domain/CompletionRecords';
-import {is, PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {readVariable} from '../rules/Basic';
-import {getValue} from '../rules/Others';
-import {constant, RuleExpression, trackOptimized} from '../rules/RuleExpression';
-import {inNewScope, RuleIfStatement, RuleLetStatement, RuleReturn} from '../rules/RuleStatements';
+} from '../../domain/CompletionRecords';
+import {is, PrimitiveValue} from '../../domain/js/PrimitiveValue';
+import {readVariable} from '../../rules/Basic';
+import {getValue} from '../../rules/Others';
+import {constant, RuleExpression, trackOptimized} from '../../rules/RuleExpression';
+import {inNewScope, RuleIfStatement, RuleLetStatement, RuleReturn} from '../../rules/RuleStatements';
 
 export function IfStatement(node: IfStatement): RuleExpression<CompletionRecord> {
     const test = trackOptimized(toRule(node.test));

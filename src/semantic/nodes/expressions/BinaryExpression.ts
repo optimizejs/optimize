@@ -1,12 +1,12 @@
 import {BinaryExpression, Expression} from 'estree';
 import {types} from 'recast';
-import {toRule} from '../../RuleMapper';
-import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../domain/CompletionRecords';
-import {getType, Type} from '../domain/js/JSValue';
-import {Prim, PrimExpr, PrimitiveValue} from '../domain/js/PrimitiveValue';
-import {call, or, readVariable, same} from '../rules/Basic';
-import {toNumber, toPrimitive, toString} from '../rules/BuiltIn';
-import {equals, getValue, strictEquals} from '../rules/Others';
+import {toRule} from '../../../RuleMapper';
+import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../../domain/CompletionRecords';
+import {getType, Type} from '../../domain/js/JSValue';
+import {Prim, PrimExpr, PrimitiveValue} from '../../domain/js/PrimitiveValue';
+import {call, or, readVariable, same} from '../../rules/Basic';
+import {toNumber, toPrimitive, toString} from '../../rules/BuiltIn';
+import {equals, getValue, strictEquals} from '../../rules/Others';
 import {
     BinaryCalculator, constant,
     RuleBinaryExpression,
@@ -15,7 +15,7 @@ import {
     SimpleUnaryCalculator,
     trackOptimized,
     TrackOptimizedExpression
-} from '../rules/RuleExpression';
+} from '../../rules/RuleExpression';
 import {
     inNewScope,
     RuleBlockStatement,
@@ -24,7 +24,7 @@ import {
     RuleLetStatement,
     RuleReturn,
     RuleStatement
-} from '../rules/RuleStatements';
+} from '../../rules/RuleStatements';
 
 export function BinaryExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
     switch (node.operator) {
