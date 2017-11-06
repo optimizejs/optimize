@@ -2,7 +2,7 @@ import {Expression, Node, Statement} from 'estree';
 import {toExpression, toNodeByMapper, toStatement} from '../../RuleMapper';
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {Evaluation} from './Evaluation';
-import {Executable} from './Executable';
+import {Executable, VariableVisitor} from './Executable';
 import {Optimized} from './Optimized';
 
 export type BackMapper = () => Node;
@@ -14,9 +14,16 @@ export abstract class RuleExpression<T> implements Executable<RuleExpression<T>>
     }
 
     abstract execute(evaluation: Evaluation, confident: boolean): Optimized<RuleExpression<T>>;
+
+    abstract visitUsedVariables(visit: VariableVisitor): void;
 }
 
-export class RuleConstantExpression<T> extends RuleExpression<T> {
+export abstract class NoVarExpression<T> extends RuleExpression<T> {
+    visitUsedVariables(visit: VariableVisitor): void { // leaf and has no variable usages
+    }
+}
+
+export class RuleConstantExpression<T> extends NoVarExpression<T> {
     constructor(readonly value: T) {
         super();
     }
@@ -51,6 +58,10 @@ export abstract class RuleAbstractUnaryExpression<A, T> extends RuleExpression<T
             return this.calculate(x.value);
         }
         return optimizedArg.wrapIfOptimized(this, arg => this.copy(arg));
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        this.argument.visitUsedVariables(visit);
     }
 
     protected abstract calculate(arg: A): Optimized<RuleExpression<T>>;
@@ -90,6 +101,11 @@ abstract class RuleAbstractBinaryExpression<L, R, T> extends RuleExpression<T> {
             this,
             () => this.copy(left, right)
         );
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        this.left.visitUsedVariables(visit);
+        this.right.visitUsedVariables(visit);
     }
 
     protected abstract calculate(left: L, right: R): Optimized<RuleExpression<T>>;
@@ -157,6 +173,10 @@ export class TrackOptimizedExpression extends RuleExpression<CompletionRecord> {
 
     toStatement(): Statement {
         return toStatement(this.wrapped);
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        this.wrapped.visitUsedVariables(visit);
     }
 }
 

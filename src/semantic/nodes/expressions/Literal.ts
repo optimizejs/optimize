@@ -1,4 +1,4 @@
-import {Literal, RegExpLiteral} from 'estree';
+import {Literal, RegExpLiteral, UnaryExpression} from 'estree';
 import {isLiteralable} from '../../../utils/Utils';
 import {CompletionRecord, normalCompletion, NormalCompletionRecord} from '../../domain/CompletionRecords';
 import {JSValue} from '../../domain/js/JSValue';
@@ -16,7 +16,7 @@ export function Literal(node: Literal): RuleExpression<CompletionRecord> { // TO
     }
 }
 
-export function createLiteral(rule: RuleExpression<CompletionRecord>): Literal | null {
+export function createLiteral(rule: RuleExpression<CompletionRecord>): Literal | UnaryExpression | null {
     if (rule instanceof RuleConstantExpression && rule.value instanceof NormalCompletionRecord) {
         const value = rule.value.value;
         return createLiteralFromValue(value as JSValue);

@@ -1,5 +1,6 @@
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {Evaluation} from './Evaluation';
+import {VariableVisitor} from './Executable';
 import {Optimized} from './Optimized';
 import {
     BackMapper,
@@ -20,18 +21,25 @@ export class RuleCallExpression extends RuleExpression<CompletionRecord> {
         const params = optimizedParams.map(param => param.get());
         const optimizedFn = this.fn.call(params);
 
-        for (const statement of optimizedFn.get().body) { // todo if-en belüli return kiszűrése
+        const statements = optimizedFn.get().body;
+        if (statements.length === 1) {
+            const statement = statements[0];
             if (statement instanceof RuleReturn && statement.expression instanceof RuleConstantExpression) {
                 return Optimized.optimized(statement.expression);
             }
         }
 
-        // todo optimize single return
         return Optimized.wrapIfOptimized(
             [...optimizedParams, optimizedFn],
             this,
             () => new RuleCallExpression(optimizedFn.get(), params, this.mapper)
         );
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        for (const param of this.parameters) {
+            param.visitUsedVariables(visit);
+        }
     }
 }
 
@@ -45,6 +53,10 @@ class RuleReadVariableExpression extends RuleExpression<any> {
             return Optimized.optimized(new RuleConstantExpression(evaluation.read(this.variable)));
         }
         return Optimized.original(this);
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        visit(this.variable);
     }
 }
 

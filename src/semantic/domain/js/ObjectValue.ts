@@ -1,6 +1,7 @@
 import {Evaluation} from '../../rules/Evaluation';
+import {VariableVisitor} from '../../rules/Executable';
 import {Optimized} from '../../rules/Optimized';
-import {constant, RuleExpression} from '../../rules/RuleExpression';
+import {constant, NoVarExpression, RuleExpression} from '../../rules/RuleExpression';
 import {CompletionRecord} from '../CompletionRecords';
 import {JSValue, Type} from './JSValue';
 
@@ -16,7 +17,7 @@ export class ObjectValue extends JSValue {
     }
 }
 
-export class RuleNewObjectExpression<T> extends RuleExpression<ObjectValue> {
+class RuleNewObjectExpression<T> extends NoVarExpression<ObjectValue> {
     constructor(readonly payload: T) {
         super();
     }
@@ -42,6 +43,12 @@ class RuleCallGetExpression extends RuleExpression<CompletionRecord> {
             this,
             () => new RuleCallGetExpression(obj.get(), property.get(), thisValue.get())
         );
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        this.obj.visitUsedVariables(visit);
+        this.property.visitUsedVariables(visit);
+        this.thisValue.visitUsedVariables(visit);
     }
 }
 

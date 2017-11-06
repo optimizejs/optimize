@@ -1,4 +1,4 @@
-import {Literal} from 'estree';
+import {Literal, UnaryExpression} from 'estree';
 import {types} from 'recast';
 import {JSValue} from '../domain/js/JSValue';
 import {ObjectValue} from '../domain/js/ObjectValue';
@@ -9,10 +9,13 @@ export class RegExpCreation {
     }
 }
 
-export function createLiteralFromValue(value: JSValue): Literal {
+export function createLiteralFromValue(value: JSValue): Literal | UnaryExpression {
     let literalValue;
     if (value instanceof PrimitiveValue) {
         literalValue = value.value;
+        if (literalValue === void 0) {
+            return types.builders.unaryExpression('void', types.builders.literal(0));
+        }
     } else {
         const regExpCreation = (value as ObjectValue).payload as RegExpCreation;
         literalValue = new RegExp(regExpCreation.pattern, regExpCreation.flags);

@@ -1,12 +1,14 @@
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {call} from './Basic';
 import {Evaluation} from './Evaluation';
-import {Executable} from './Executable';
+import {Executable, VariableVisitor} from './Executable';
 import {Optimized} from './Optimized';
 import {BackMapper, RuleConstantExpression, RuleExpression} from './RuleExpression';
 
-function flattenOptimize(evaluation: Evaluation, confident: boolean,
+function flattenOptimize(evaluation: Evaluation, confident: boolean, root: boolean,
                          statements: RuleStatement[]): Optimized<RuleStatement>[] {
+
+    const usedVariables: { [name: string]: boolean } = Object.create(null);
 
     let canReturn = false;
     const result: Optimized<RuleStatement>[] = [];
@@ -19,13 +21,19 @@ function flattenOptimize(evaluation: Evaluation, confident: boolean,
         }
         const newStatement = optimized.get();
         canReturn = canReturn || newStatement.canReturn();
+        if (root) {
+            newStatement.visitUsedVariables(variable => usedVariables[variable] = true);
+        }
         if (newStatement instanceof RuleBlockStatement) {
             result.push(...newStatement.body.map(st => Optimized.optimized(st)));
         } else {
             result.push(optimized);
         }
     }
-    return result;
+    return root ? result.filter(opt => {
+        const statement = opt.get();
+        return !(statement instanceof RuleLetStatement) || usedVariables[statement.variableName];
+    }) : result;
 }
 
 function canReturnAny(statements: RuleStatement[]): boolean {
@@ -53,7 +61,7 @@ export class RuleFunction {
             }
         }
 
-        const statements = flattenOptimize(evaluation, true, this.body);
+        const statements = flattenOptimize(evaluation, true, true, this.body);
 
         return Optimized.wrapIfOptimized(
             statements,
@@ -72,6 +80,8 @@ export abstract class RuleStatement implements Executable<RuleStatement> {
 
     abstract execute(evaluation: Evaluation, confident: boolean): Optimized<RuleStatement>;
 
+    abstract visitUsedVariables(visit: VariableVisitor): void;
+
     abstract canReturn(): boolean;
 }
 
@@ -81,9 +91,15 @@ export class RuleBlockStatement extends RuleStatement {
     }
 
     execute(evaluation: Evaluation, confident: boolean): Optimized<RuleStatement> {
-        const body = flattenOptimize(evaluation, confident, this.body);
+        const body = flattenOptimize(evaluation, confident, false, this.body);
         return Optimized.wrapIfOptimized(body, this, () => new RuleBlockStatement(body.map(s => s.get())));
         // todo optimize single
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        for (const statement of this.body) {
+            statement.visitUsedVariables(visit);
+        }
     }
 
     canReturn(): boolean {
@@ -109,6 +125,10 @@ export class RuleLetStatement extends RuleStatement {
         return optimizedExpression.wrapIfOptimized(this, e => new RuleLetStatement(this.variableName, e));
     }
 
+    visitUsedVariables(visit: VariableVisitor): void {
+        this.expression.visitUsedVariables(visit);
+    }
+
     canReturn(): boolean {
         return false;
     }
@@ -121,6 +141,10 @@ export class RuleReturn extends RuleStatement {
 
     execute(evaluation: Evaluation, confident: boolean): Optimized<RuleStatement> {
         return this.expression.execute(evaluation, confident).wrapIfOptimized(this, e => new RuleReturn(e)); // todo
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        this.expression.visitUsedVariables(visit);
     }
 
     canReturn(): boolean {
@@ -160,6 +184,12 @@ export class RuleIfStatement extends RuleStatement {
             this,
             () => new RuleIfStatement(test, optimizedConsequent.get(), optimizedAlternate.get())
         );
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        this.test.visitUsedVariables(visit);
+        this.consequent.visitUsedVariables(visit);
+        this.alternate.visitUsedVariables(visit);
     }
 
     canReturn(): boolean {

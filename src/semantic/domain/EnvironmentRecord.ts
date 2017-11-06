@@ -1,4 +1,5 @@
 import {Evaluation} from '../rules/Evaluation';
+import {VariableVisitor} from '../rules/Executable';
 import {Optimized} from '../rules/Optimized';
 import {RuleExpression} from '../rules/RuleExpression';
 import {CompletionRecord} from './CompletionRecords';
@@ -23,6 +24,12 @@ class GetBindingValueExpression extends RuleExpression<CompletionRecord> { // to
             this,
             () => new GetBindingValueExpression(er.get(), name.get(), isStrict.get())
         );
+    }
+
+    visitUsedVariables(visit: VariableVisitor): void {
+        this.er.visitUsedVariables(visit);
+        this.name.visitUsedVariables(visit);
+        this.isStrict.visitUsedVariables(visit);
     }
 }
 
