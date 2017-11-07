@@ -2,7 +2,7 @@ import {ClassBody, ClassDeclaration, FunctionExpression, MethodDefinition} from 
 import {types} from 'recast';
 import {toRule} from '../../../RuleMapper';
 import {CompletionRecord} from '../../domain/CompletionRecords';
-import {RuleExpression, trackOptimized} from '../../rules/RuleExpression';
+import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpression';
 import {inNewScope, RuleLetStatement} from '../../rules/RuleStatements';
 
 export function ClassDeclaration(node: ClassDeclaration): RuleExpression<CompletionRecord> {

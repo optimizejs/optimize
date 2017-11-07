@@ -4,7 +4,8 @@ import {CompletionRecord, normalCompletion, NormalCompletionRecord} from '../../
 import {JSValue} from '../../domain/js/JSValue';
 import {newObject} from '../../domain/js/ObjectValue';
 import {PrimitiveValue} from '../../domain/js/PrimitiveValue';
-import {constant, RuleConstantExpression, RuleExpression} from '../../rules/RuleExpression';
+import {RuleExpression} from '../../rules/expression/RuleExpression';
+import {constant, RuleConstantExpression} from '../../rules/expression/RuleNoVarExpresion';
 import {createLiteralFromValue, RegExpCreation} from '../NodeHelper';
 
 export function Literal(node: Literal): RuleExpression<CompletionRecord> { // TODO template literal

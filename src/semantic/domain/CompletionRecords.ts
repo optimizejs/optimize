@@ -1,5 +1,7 @@
 import {readVariable} from '../rules/Basic';
-import {constant, RuleExpression, RuleUnaryExpression, SimpleUnaryCalculator} from '../rules/RuleExpression';
+import {RuleExpression} from '../rules/expression/RuleExpression';
+import {constant} from '../rules/expression/RuleNoVarExpresion';
+import {RuleParamExpression, SimpleCalculator} from '../rules/expression/RuleParamExpression';
 import {RuleIfStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../rules/RuleStatements';
 import {JSValue} from './js/JSValue';
 import {Label} from './Label';
@@ -47,23 +49,29 @@ export class ContinueCompletionRecord extends CompletionRecord {
 export const EMPTY_COMPLETION = normalCompletion(constant(EMPTY));
 
 export function isAbrupt(cr: RuleExpression<CompletionRecord>): RuleExpression<boolean> {
-    return new RuleUnaryExpression(cr, new SimpleUnaryCalculator(arg => !(arg instanceof NormalCompletionRecord)));
+    return new RuleParamExpression(new SimpleCalculator(arg => !(arg instanceof NormalCompletionRecord)), cr);
 }
 
 export function getNormalValue(cr: RuleExpression<CompletionRecord>): RuleExpression<JSValue | Empty> {
-    return new RuleUnaryExpression(cr, new SimpleUnaryCalculator(arg => (arg as NormalCompletionRecord).value));
+    return new RuleParamExpression(new SimpleCalculator(arg => (arg as NormalCompletionRecord).value), cr);
 }
 
 export function normalCompletion(value: RuleExpression<JSValue | Empty>): RuleExpression<NormalCompletionRecord> {
-    return new RuleUnaryExpression(value, new SimpleUnaryCalculator(arg => new NormalCompletionRecord(arg)));
+    return new RuleParamExpression<NormalCompletionRecord, JSValue | Empty>(
+        new SimpleCalculator(arg => new NormalCompletionRecord(arg)),
+        value
+    );
 }
 
 export function throwCompletion(value: RuleExpression<JSValue>): RuleExpression<ThrowCompletionRecord> {
-    return new RuleUnaryExpression(value, new SimpleUnaryCalculator(arg => new ThrowCompletionRecord(arg)));
+    return new RuleParamExpression<ThrowCompletionRecord, JSValue>(
+        new SimpleCalculator(arg => new ThrowCompletionRecord(arg)),
+        value
+    );
 }
 
 export function isEmptyValue(value: RuleExpression<JSValue | Empty>): RuleExpression<boolean> {
-    return new RuleUnaryExpression(value, new SimpleUnaryCalculator(arg => arg === EMPTY));
+    return new RuleParamExpression(new SimpleCalculator(arg => arg === EMPTY), value);
 }
 
 export function returnIfAbrupt(variableName: string): RuleStatement {

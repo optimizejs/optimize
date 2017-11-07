@@ -2,8 +2,9 @@ import {CompletionRecord} from '../domain/CompletionRecords';
 import {call} from './Basic';
 import {Evaluation} from './Evaluation';
 import {Executable, VariableVisitor} from './Executable';
+import {BackMapper, RuleExpression} from './expression/RuleExpression';
+import {RuleConstantExpression} from './expression/RuleNoVarExpresion';
 import {Optimized} from './Optimized';
-import {BackMapper, RuleConstantExpression, RuleExpression} from './RuleExpression';
 
 function flattenOptimize(evaluation: Evaluation, confident: boolean, root: boolean,
                          statements: RuleStatement[]): Optimized<RuleStatement>[] {

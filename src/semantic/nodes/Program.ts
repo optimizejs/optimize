@@ -3,7 +3,7 @@ import {types} from 'recast';
 import {toRule, toStatement} from '../../RuleMapper';
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {RuleCallExpression} from '../rules/Basic';
-import {RuleExpression} from '../rules/RuleExpression';
+import {RuleExpression} from '../rules/expression/RuleExpression';
 import {inNewScope, RuleLetStatement, RuleStatement} from '../rules/RuleStatements';
 
 export function Program(node: Program): RuleExpression<CompletionRecord> {

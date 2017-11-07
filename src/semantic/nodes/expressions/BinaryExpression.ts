@@ -6,16 +6,10 @@ import {getType, Type} from '../../domain/js/JSValue';
 import {Prim, PrimExpr, PrimitiveValue} from '../../domain/js/PrimitiveValue';
 import {call, or, readVariable, same} from '../../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../../rules/BuiltIn';
+import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
+import {constant} from '../../rules/expression/RuleNoVarExpresion';
+import {Calculator, RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
 import {equals, getValue, strictEquals} from '../../rules/Others';
-import {
-    BinaryCalculator, constant,
-    RuleBinaryExpression,
-    RuleExpression,
-    RuleUnaryExpression,
-    SimpleUnaryCalculator,
-    trackOptimized,
-    TrackOptimizedExpression
-} from '../../rules/RuleExpression';
 import {
     inNewScope,
     RuleBlockStatement,
@@ -51,7 +45,7 @@ export function BinaryExpression(node: BinaryExpression): RuleExpression<Complet
     }
 }
 
-class JSBinaryCalculator implements BinaryCalculator<PrimitiveValue, PrimitiveValue, PrimitiveValue> {
+class JSBinaryCalculator implements Calculator<PrimitiveValue, PrimitiveValue, PrimitiveValue> {
     private readonly evaluator: (a: primitive, b: primitive) => primitive;
 
     constructor(readonly operator: string) {
@@ -63,8 +57,8 @@ class JSBinaryCalculator implements BinaryCalculator<PrimitiveValue, PrimitiveVa
     }
 }
 
-function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleBinaryExpression<Prim, Prim, Prim> {
-    return new RuleBinaryExpression(l, r, new JSBinaryCalculator(operator));
+function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleParamExpression<Prim, Prim, Prim> {
+    return new RuleParamExpression(new JSBinaryCalculator(operator), l, r);
 }
 
 class ParamValues {
@@ -156,9 +150,9 @@ function negate(expression: RuleExpression<CompletionRecord>): RuleExpression<Co
     return call(new RuleFunction(['param'], [
         returnIfAbrupt('param'),
         new RuleReturn(normalCompletion(
-            new RuleUnaryExpression(
+            new RuleParamExpression(
+                new SimpleCalculator(p => new PrimitiveValue(!(p as PrimitiveValue).value)),
                 readVariable('param'),
-                new SimpleUnaryCalculator(p => new PrimitiveValue(!(p as PrimitiveValue).value))
             )
         ))
     ]), [expression]);

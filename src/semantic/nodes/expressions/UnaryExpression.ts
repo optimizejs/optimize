@@ -3,8 +3,9 @@ import {types} from 'recast';
 import {toRule} from '../../../RuleMapper';
 import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../../domain/CompletionRecords';
 import {PrimitiveValue} from '../../domain/js/PrimitiveValue';
+import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpression';
+import {constant} from '../../rules/expression/RuleNoVarExpresion';
 import {getValue} from '../../rules/Others';
-import {constant, RuleExpression, trackOptimized} from '../../rules/RuleExpression';
 import {inNewScope, RuleLetStatement, RuleReturn} from '../../rules/RuleStatements';
 
 export function UnaryExpression(node: UnaryExpression): RuleExpression<CompletionRecord> {

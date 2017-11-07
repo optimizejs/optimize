@@ -1,7 +1,8 @@
 import {Evaluation} from '../../rules/Evaluation';
 import {VariableVisitor} from '../../rules/Executable';
+import {RuleExpression} from '../../rules/expression/RuleExpression';
+import {constant, NoVarExpression} from '../../rules/expression/RuleNoVarExpresion';
 import {Optimized} from '../../rules/Optimized';
-import {constant, NoVarExpression, RuleExpression} from '../../rules/RuleExpression';
 import {CompletionRecord} from '../CompletionRecords';
 import {JSValue, Type} from './JSValue';
 

@@ -1,9 +1,5 @@
-import {
-    notImplementedUnaryCalculator,
-    RuleExpression,
-    RuleUnaryExpression,
-    SimpleUnaryCalculator
-} from '../rules/RuleExpression';
+import {RuleExpression} from '../rules/expression/RuleExpression';
+import {notImplementedCalculator, RuleParamExpression, SimpleCalculator} from '../rules/expression/RuleParamExpression';
 import {JSValue} from './js/JSValue';
 import {ObjectValue} from './js/ObjectValue';
 
@@ -12,29 +8,29 @@ export class Reference {
 }
 
 export function isReference(value: RuleExpression<any>): RuleExpression<boolean> {
-    return new RuleUnaryExpression(value, new SimpleUnaryCalculator(arg => arg instanceof Reference));
+    return new RuleParamExpression(new SimpleCalculator(arg => arg instanceof Reference), value);
 }
 
 export function getBase(value: RuleExpression<Reference>): RuleExpression<JSValue> {
-    return new RuleUnaryExpression(value, notImplementedUnaryCalculator);
+    return new RuleParamExpression(notImplementedCalculator, value);
 }
 
 export function isUnresolvable(value: RuleExpression<Reference>): RuleExpression<boolean> {
-    return new RuleUnaryExpression(value, notImplementedUnaryCalculator);
+    return new RuleParamExpression(notImplementedCalculator, value);
 }
 
 export function isPropertyReference(value: RuleExpression<Reference>): RuleExpression<boolean> {
-    return new RuleUnaryExpression(value, notImplementedUnaryCalculator);
+    return new RuleParamExpression(notImplementedCalculator, value);
 }
 
 export function getReferencedName(value: RuleExpression<Reference>): RuleExpression<string> {
-    return new RuleUnaryExpression(value, notImplementedUnaryCalculator);
+    return new RuleParamExpression(notImplementedCalculator, value);
 }
 
 export function isStrictReference(value: RuleExpression<Reference>): RuleExpression<boolean> {
-    return new RuleUnaryExpression(value, notImplementedUnaryCalculator);
+    return new RuleParamExpression(notImplementedCalculator, value);
 }
 
 export function getThisValue(value: RuleExpression<Reference>): RuleExpression<ObjectValue> {
-    return new RuleUnaryExpression(value, notImplementedUnaryCalculator);
+    return new RuleParamExpression(notImplementedCalculator, value);
 }

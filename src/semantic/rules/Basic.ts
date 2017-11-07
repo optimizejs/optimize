@@ -1,14 +1,10 @@
 import {CompletionRecord} from '../domain/CompletionRecords';
 import {Evaluation} from './Evaluation';
 import {VariableVisitor} from './Executable';
+import {BackMapper, RuleExpression} from './expression/RuleExpression';
+import {RuleConstantExpression} from './expression/RuleNoVarExpresion';
+import {RuleParamExpression, SimpleCalculator} from './expression/RuleParamExpression';
 import {Optimized} from './Optimized';
-import {
-    BackMapper,
-    RuleBinaryExpression,
-    RuleConstantExpression,
-    RuleExpression,
-    SimpleBinaryCalculator
-} from './RuleExpression';
 import {RuleFunction, RuleReturn} from './RuleStatements';
 
 export class RuleCallExpression extends RuleExpression<CompletionRecord> {
@@ -71,13 +67,13 @@ export function readVariable(variable: string): RuleExpression<any> {
 }
 
 export function or(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
-    return new RuleBinaryExpression(expr1, expr2, new SimpleBinaryCalculator((a, b) => a || b));
+    return new RuleParamExpression(new SimpleCalculator((a, b) => a || b), expr1, expr2);
 }
 
 export function and(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
-    return new RuleBinaryExpression(expr1, expr2, new SimpleBinaryCalculator((a, b) => a && b));
+    return new RuleParamExpression(new SimpleCalculator((a, b) => a && b), expr1, expr2);
 }
 
 export function same<T>(x: RuleExpression<T>, y: RuleExpression<T>): RuleExpression<boolean> {
-    return new RuleBinaryExpression(x, y, new SimpleBinaryCalculator((l, r) => l === r));
+    return new RuleParamExpression(new SimpleCalculator((l, r) => l === r), x, y);
 }

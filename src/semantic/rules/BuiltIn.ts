@@ -2,16 +2,12 @@ import {CompletionRecord, NormalCompletionRecord} from '../domain/CompletionReco
 import {JSValue} from '../domain/js/JSValue';
 import {newObject, ObjectValue} from '../domain/js/ObjectValue';
 import {PrimitiveValue} from '../domain/js/PrimitiveValue';
+import {RuleExpression} from './expression/RuleExpression';
+import {constant} from './expression/RuleNoVarExpresion';
+import {RuleAbstractParamExpression, RuleParamExpression, SimpleCalculator} from './expression/RuleParamExpression';
 import {Optimized} from './Optimized';
-import {
-    constant,
-    RuleAbstractUnaryExpression,
-    RuleExpression,
-    RuleUnaryExpression,
-    SimpleUnaryCalculator
-} from './RuleExpression';
 
-class ToNumberExpression extends RuleAbstractUnaryExpression<JSValue, CompletionRecord> {
+class ToNumberExpression extends RuleAbstractParamExpression<CompletionRecord, JSValue> {
     protected calculate(arg: JSValue): Optimized<RuleExpression<CompletionRecord>> {
         if (arg instanceof PrimitiveValue) {
             return Optimized.optimized(constant(new NormalCompletionRecord(new PrimitiveValue(+(arg.value as any)))));
@@ -21,11 +17,11 @@ class ToNumberExpression extends RuleAbstractUnaryExpression<JSValue, Completion
     }
 
     protected copy(arg: RuleExpression<JSValue>): ToNumberExpression {
-        return new ToNumberExpression(this.argument);
+        return new ToNumberExpression(this.params[0]);
     }
 }
 
-class ToPrimitiveExpression extends RuleAbstractUnaryExpression<JSValue, CompletionRecord> {
+class ToPrimitiveExpression extends RuleAbstractParamExpression<CompletionRecord, JSValue> {
     protected calculate(arg: JSValue): Optimized<RuleExpression<CompletionRecord>> {
         if (arg instanceof PrimitiveValue) {
             return Optimized.optimized(constant(new NormalCompletionRecord(arg)));
@@ -35,7 +31,7 @@ class ToPrimitiveExpression extends RuleAbstractUnaryExpression<JSValue, Complet
     }
 
     protected copy(arg: RuleExpression<JSValue>): ToPrimitiveExpression {
-        return new ToPrimitiveExpression(this.argument);
+        return new ToPrimitiveExpression(this.params[0]);
     }
 }
 
@@ -44,7 +40,7 @@ export function toNumber(argument: RuleExpression<JSValue>): RuleExpression<Comp
 }
 
 export function toBoolean(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new RuleUnaryExpression(param, new SimpleUnaryCalculator(arg => {
+    return new RuleParamExpression(new SimpleCalculator(arg => {
         let result;
         if (arg instanceof PrimitiveValue) {
             result = !!(arg.value as any);
@@ -52,7 +48,7 @@ export function toBoolean(param: RuleExpression<JSValue>): RuleExpression<Comple
             result = true;
         }
         return new NormalCompletionRecord(new PrimitiveValue(result));
-    }));
+    }), param);
 }
 
 export function toPrimitive(argument: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
@@ -60,13 +56,13 @@ export function toPrimitive(argument: RuleExpression<JSValue>): RuleExpression<C
 }
 
 export function toString(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new RuleUnaryExpression(param, new SimpleUnaryCalculator(arg => {
+    return new RuleParamExpression(new SimpleCalculator(arg => {
         if (arg instanceof PrimitiveValue) {
             return new NormalCompletionRecord(new PrimitiveValue('' + (arg.value as any)));
         } else {
             throw new Error('Converting object to primitive');
         }
-    }));
+    }), param);
 }
 
 export function referenceError(): RuleExpression<ObjectValue> {

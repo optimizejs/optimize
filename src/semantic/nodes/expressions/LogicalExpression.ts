@@ -5,8 +5,8 @@ import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../../domain/C
 import {is} from '../../domain/js/PrimitiveValue';
 import {readVariable} from '../../rules/Basic';
 import {toBoolean} from '../../rules/BuiltIn';
+import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpression';
 import {getValue} from '../../rules/Others';
-import {RuleExpression, trackOptimized} from '../../rules/RuleExpression';
 import {inNewScope, RuleIfStatement, RuleLetStatement, RuleReturn} from '../../rules/RuleStatements';
 
 export function LogicalExpression(node: LogicalExpression): RuleExpression<CompletionRecord> {

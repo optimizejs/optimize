@@ -20,7 +20,8 @@ import {
 } from '../domain/Reference';
 import {and, call, readVariable, same} from './Basic';
 import {referenceError} from './BuiltIn';
-import {RuleBinaryExpression, RuleExpression, SimpleBinaryCalculator, UnknownBinaryExpression} from './RuleExpression';
+import {RuleExpression} from './expression/RuleExpression';
+import {RuleParamExpression, SimpleCalculator, UnknownExpression} from './expression/RuleParamExpression';
 import {
     RuleBlockStatement,
     RuleEmptyStatement,
@@ -80,18 +81,18 @@ function strictComparison(x: JSValue, y: JSValue): boolean {
     throw new Error('Object values are not supported');
 }
 
-function primitiveEqualityComparison(left: PrimExpr, right: PrimExpr): RuleBinaryExpression<Prim, Prim, Prim> {
+function primitiveEqualityComparison(left: PrimExpr, right: PrimExpr): RuleParamExpression<Prim, Prim, Prim> {
 
-    return new RuleBinaryExpression(left, right, new SimpleBinaryCalculator((l, r) => {
+    return new RuleParamExpression(new SimpleCalculator((l, r) => {
         /* tslint:disable-next-line */
         return new PrimitiveValue(l.value == r.value);
-    }));
+    }), left, right);
 }
 
 export function strictEquals(x: RuleExpression<JSValue>, y: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new RuleBinaryExpression(x, y, new SimpleBinaryCalculator((l, r) => {
+    return new RuleParamExpression<CompletionRecord, JSValue, JSValue>(new SimpleCalculator((l, r) => {
         return new NormalCompletionRecord(new PrimitiveValue(strictComparison(l, r)));
-    }));
+    }), x, y);
 }
 
 const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [
@@ -101,7 +102,7 @@ const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [
         new RuleIfStatement(
             and(isPrimitive(readVariable('x')), isPrimitive(readVariable('y'))),
             new RuleReturn(normalCompletion(primitiveEqualityComparison(readVariable('x'), readVariable('y')))),
-            new RuleReturn(new UnknownBinaryExpression(
+            new RuleReturn(new UnknownExpression(
                 readVariable('x'),
                 readVariable('y')
             ))

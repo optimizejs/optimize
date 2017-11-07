@@ -51,7 +51,7 @@ import {CatchClause, TryStatement} from './semantic/nodes/statements/TryStatemen
 import {VariableDeclaration, VariableDeclarator} from './semantic/nodes/statements/VariableDeclaration';
 import {WhileStatement} from './semantic/nodes/statements/WhileStatement';
 import {WithStatement} from './semantic/nodes/statements/WithStatement';
-import {BackMapper, RuleExpression} from './semantic/rules/RuleExpression';
+import {BackMapper, RuleExpression} from './semantic/rules/expression/RuleExpression';
 
 type RuleMapping = (node: Node) => RuleExpression<CompletionRecord>;
 

@@ -3,8 +3,9 @@ import {types} from 'recast';
 import {toRule} from '../../../RuleMapper';
 import {CompletionRecord, returnIfAbrupt, throwCompletion, ThrowCompletionRecord} from '../../domain/CompletionRecords';
 import {readVariable} from '../../rules/Basic';
+import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpression';
+import {RuleConstantExpression} from '../../rules/expression/RuleNoVarExpresion';
 import {getValue} from '../../rules/Others';
-import {RuleConstantExpression, RuleExpression, trackOptimized} from '../../rules/RuleExpression';
 import {inNewScope, RuleLetStatement, RuleReturn} from '../../rules/RuleStatements';
 import {createLiteralFromValue} from '../NodeHelper';
 

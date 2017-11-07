@@ -1,4 +1,4 @@
-import {RuleExpression} from './RuleExpression';
+import {RuleExpression} from './expression/RuleExpression';
 
 export class Optimized<T> {
     static original<T>(item: T): Optimized<T> {
