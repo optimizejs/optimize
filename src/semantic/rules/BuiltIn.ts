@@ -35,6 +35,21 @@ class ToPrimitiveExpression extends RuleAbstractParamExpression<CompletionRecord
     }
 }
 
+class ToStringExpression extends RuleAbstractParamExpression<CompletionRecord, JSValue> {
+    protected calculate(arg: JSValue): Optimized<RuleExpression<CompletionRecord>> {
+        if (arg instanceof PrimitiveValue) {
+            const result = new NormalCompletionRecord(new PrimitiveValue('' + (arg.value as any)));
+            return Optimized.optimized(constant(result));
+        } else {
+            return Optimized.original(this);
+        }
+    }
+
+    protected copy(arg: RuleExpression<JSValue>): ToStringExpression {
+        return new ToStringExpression(this.params[0]);
+    }
+}
+
 export function toNumber(argument: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
     return new ToNumberExpression(argument);
 }
@@ -56,13 +71,7 @@ export function toPrimitive(argument: RuleExpression<JSValue>): RuleExpression<C
 }
 
 export function toString(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new RuleParamExpression(new SimpleCalculator(arg => {
-        if (arg instanceof PrimitiveValue) {
-            return new NormalCompletionRecord(new PrimitiveValue('' + (arg.value as any)));
-        } else {
-            throw new Error('Converting object to primitive');
-        }
-    }), param);
+    return new ToStringExpression(param);
 }
 
 export function referenceError(): RuleExpression<ObjectValue> {

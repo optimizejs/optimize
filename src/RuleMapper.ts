@@ -12,7 +12,7 @@ import {LogicalExpression} from './semantic/nodes/expressions/LogicalExpression'
 import {MemberExpression} from './semantic/nodes/expressions/MemberExpression';
 import {MetaProperty} from './semantic/nodes/expressions/MetaProperty';
 import {NewExpression} from './semantic/nodes/expressions/NewExpression';
-import {ObjectExpression, Property} from './semantic/nodes/expressions/ObjectExpression';
+import {ObjectExpression} from './semantic/nodes/expressions/ObjectExpression';
 import {SequenceExpression} from './semantic/nodes/expressions/SequenceExpression';
 import {Super} from './semantic/nodes/expressions/Super';
 import {TaggedTemplateExpression, TemplateLiteral} from './semantic/nodes/expressions/TemplateLiteral';
@@ -26,7 +26,7 @@ import {ExportNamedDeclaration} from './semantic/nodes/module/ExportNamedDeclara
 import {ImportDeclaration} from './semantic/nodes/module/ImportDeclaration';
 import {ArrayPattern} from './semantic/nodes/patterns/ArrayPattern';
 import {AssignmentPattern} from './semantic/nodes/patterns/AssignmentPattern';
-import {ObjectPattern} from './semantic/nodes/patterns/ObjectPattern';
+import {ObjectPattern, Property} from './semantic/nodes/patterns/ObjectPattern';
 import {RestElement} from './semantic/nodes/patterns/RestElement';
 import {SpreadElement} from './semantic/nodes/patterns/SpreadElement';
 import {createProgram, Program} from './semantic/nodes/Program';

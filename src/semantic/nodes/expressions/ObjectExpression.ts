@@ -1,33 +1,78 @@
-import {ObjectExpression, Property} from 'estree';
+import {Identifier, ObjectExpression, Property} from 'estree';
 import {types} from 'recast';
 import {toRule} from '../../../RuleMapper';
-import {CompletionRecord} from '../../domain/CompletionRecords';
-import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpression';
+import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../../domain/CompletionRecords';
+import {JSValue} from '../../domain/js/JSValue';
+import {newObject, ObjectValue} from '../../domain/js/ObjectValue';
+import {PrimitiveValue} from '../../domain/js/PrimitiveValue';
+import {readVariable} from '../../rules/Basic';
+import {toString} from '../../rules/BuiltIn';
+import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
+import {RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
 import {getValue} from '../../rules/Others';
-import {inNewScope, RuleLetStatement} from '../../rules/RuleStatements';
+import {inNewScope, RuleBlockStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../../rules/RuleStatements';
+import {ObjectCreation, ObjectProperty} from '../NodeHelper';
+import {constant} from '../../rules/expression/RuleNoVarExpresion';
 
-export function ObjectExpression(node: ObjectExpression): RuleExpression<CompletionRecord> {
-    const properties = node.properties.map(property => trackOptimized(toRule(property)));
-    return inNewScope([
-        ...properties.map(arg => new RuleLetStatement('prop', getValue(arg)))
-    ], () => types.builders.objectExpression(properties.map(element => element.toNode()))); // TODO
+interface PropertyInfo {
+    key: TrackOptimizedExpression;
+    value: TrackOptimizedExpression;
+    property: Property;
 }
 
-export function Property(node: Property): RuleExpression<CompletionRecord> {
-    const key = trackOptimized(toRule(node.key));
-    const value = trackOptimized(toRule(node.value));
+export function ObjectExpression(node: ObjectExpression): RuleExpression<CompletionRecord> {
+    const properties: PropertyInfo[] = node.properties.map(property => {
+        return {
+            key: trackOptimized(toRule(property.key)),
+            property,
+            value: trackOptimized(toRule(property.value))
+        };
+    });
     return inNewScope([
-        new RuleLetStatement('key', key),
-        new RuleLetStatement('value', value)
-    ], () => {
+        new RuleLetStatement('object', newObject(new ObjectCreation([]))),
+        ...properties.map(addProperty),
+        new RuleReturn(normalCompletion(readVariable('object')))
+    ], () => types.builders.objectExpression(properties.map((property: PropertyInfo) => {
+        const propertyNode = property.property;
         const result = types.builders.property(
-            node.kind,
-            key.toExpression(),
-            value.toExpression()
+            propertyNode.kind,
+            property.key.toExpression(),
+            property.value.toExpression()
         );
-        result.method = node.method;
-        result.shorthand = node.shorthand;
-        result.computed = node.computed;
+        result.method = propertyNode.method;
+        result.shorthand = propertyNode.shorthand;
+        result.computed = propertyNode.computed;
         return result;
-    }); // TODO
+    }))); // TODO
+}
+
+function addProperty(propInfo: PropertyInfo): RuleStatement { // todo check spec
+    let calculateKey: RuleExpression<CompletionRecord>;
+    if (propInfo.property.computed) {
+        calculateKey = getValue(propInfo.key);
+    } else {
+        calculateKey = normalCompletion(constant(new PrimitiveValue((propInfo.property.key as Identifier).name)));
+    }
+    return new RuleBlockStatement([
+        new RuleLetStatement('key', calculateKey),
+        returnIfAbrupt('key'),
+        new RuleLetStatement('keyStr', toString(readVariable('key'))),
+        returnIfAbrupt('keyStr'),
+        new RuleLetStatement('value', getValue(propInfo.value)),
+        returnIfAbrupt('value'),
+        new RuleLetStatement('object', new RuleParamExpression(
+            new SimpleCalculator(addProp),
+            readVariable('object'),
+            readVariable('keyStr'),
+            readVariable('value')
+        ))
+    ]);
+}
+
+function addProp(object: ObjectValue, key: PrimitiveValue, value: JSValue): JSValue {
+    const newProperty: ObjectProperty = {
+        key: key.value as string,
+        value
+    };
+    return new ObjectValue(new ObjectCreation([...(object.payload as ObjectCreation).properties, newProperty]));
 }
