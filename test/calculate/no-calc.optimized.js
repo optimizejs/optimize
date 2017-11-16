@@ -52,8 +52,6 @@ while (2) {
     log(2);
 }
 
-2 ? 3 : 4;
-
 (2, 2)
 
 new ((2)).constructor(2);

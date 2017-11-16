@@ -26,6 +26,6 @@ export function SwitchCase(node: SwitchCase): RuleExpression<CompletionRecord> {
         ...statements.map(statement => new RuleLetStatement('s', statement))
     ], () => types.builders.switchCase(
         test && test.toExpression(),
-        statements.map(s => s.toNode())
+        statements.map(s => s.toStatement())
     )); // TODO
 }

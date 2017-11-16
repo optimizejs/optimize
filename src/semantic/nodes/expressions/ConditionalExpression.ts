@@ -1,10 +1,13 @@
 import {ConditionalExpression} from 'estree';
 import {types} from 'recast';
 import {toRule} from '../../../RuleMapper';
-import {CompletionRecord} from '../../domain/CompletionRecords';
+import {CompletionRecord, returnIfAbrupt} from '../../domain/CompletionRecords';
+import {is} from '../../domain/js/PrimitiveValue';
+import {readVariable} from '../../rules/Basic';
+import {toBoolean} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpression';
 import {getValue} from '../../rules/Others';
-import {inNewScope, RuleLetStatement} from '../../rules/RuleStatements';
+import {inNewScope, RuleIfStatement, RuleLetStatement, RuleReturn} from '../../rules/RuleStatements';
 
 export function ConditionalExpression(node: ConditionalExpression): RuleExpression<CompletionRecord> {
     const test = trackOptimized(toRule(node.test));
@@ -13,8 +16,14 @@ export function ConditionalExpression(node: ConditionalExpression): RuleExpressi
 
     return inNewScope([
         new RuleLetStatement('test', getValue(test)),
-        new RuleLetStatement('consequent', getValue(consequent)),
-        new RuleLetStatement('alternate', getValue(alternate))
+        returnIfAbrupt('test'),
+        new RuleLetStatement('bool', toBoolean(readVariable('test'))),
+        returnIfAbrupt('bool'),
+        new RuleIfStatement(
+            is(readVariable('bool'), true),
+            new RuleReturn(getValue(consequent)),
+            new RuleReturn(getValue(alternate))
+        )
     ], () => types.builders.conditionalExpression(
         test.toExpression(),
         consequent.toExpression(),
