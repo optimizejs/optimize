@@ -1,3 +1,4 @@
+import {FunctionDescriptor} from '../../nodes/NodeHelper';
 import {Evaluation} from '../../rules/Evaluation';
 import {VariableVisitor} from '../../rules/Executable';
 import {RuleExpression} from '../../rules/expression/RuleExpression';
@@ -5,14 +6,17 @@ import {constant, NoVarExpression} from '../../rules/expression/RuleNoVarExpresi
 import {Optimized} from '../../rules/Optimized';
 import {CompletionRecord} from '../CompletionRecords';
 import {JSValue, Type} from './JSValue';
-import {FunctionCreation} from '../../nodes/NodeHelper';
 
-type ObjectProvider = () => any;
+export interface ObjectDescriptor {
+    hasCall: boolean;
+}
+
+type ObjectProvider = () => ObjectDescriptor;
 
 export class ObjectValue extends JSValue {
     objectValue: true;
 
-    constructor(readonly payload: any) {
+    constructor(readonly descriptor: ObjectDescriptor) {
         super();
     }
 
@@ -63,11 +67,11 @@ export function callGet(obj: RuleExpression<ObjectValue>, property: RuleExpressi
     return new RuleCallGetExpression(obj, property, thisValue);
 }
 
-export function newObject(payload: any): RuleExpression<ObjectValue> {
+export function newObject(payload: ObjectDescriptor): RuleExpression<ObjectValue> {
     return new RuleNewObjectExpression(() => payload);
 }
 
-export function newFunction(fc: FunctionCreation): RuleExpression<ObjectValue> {
+export function newFunction(fc: FunctionDescriptor): RuleExpression<ObjectValue> {
     return new RuleNewObjectExpression(() => {
         fc.ruleExpression.execute(new Evaluation(), true);
         return fc;

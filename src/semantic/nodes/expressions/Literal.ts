@@ -6,14 +6,14 @@ import {newObject} from '../../domain/js/ObjectValue';
 import {PrimitiveValue} from '../../domain/js/PrimitiveValue';
 import {RuleExpression} from '../../rules/expression/RuleExpression';
 import {constant, RuleConstantExpression} from '../../rules/expression/RuleNoVarExpresion';
-import {createLiteralFromValue, RegExpCreation} from '../NodeHelper';
+import {createLiteralFromValue, RegExpDescriptor} from '../NodeHelper';
 
 export function Literal(node: Literal): RuleExpression<CompletionRecord> { // TODO template literal
     if (isLiteralable(node.value)) {
         return constant(new NormalCompletionRecord(new PrimitiveValue(node.value)));
     } else {
         const regex = (node as RegExpLiteral).regex;
-        return normalCompletion(newObject(new RegExpCreation(regex.pattern, regex.flags)));
+        return normalCompletion(newObject(new RegExpDescriptor(regex.pattern, regex.flags)));
     }
 }
 

@@ -75,5 +75,5 @@ export function toString(param: RuleExpression<JSValue>): RuleExpression<Complet
 }
 
 export function referenceError(): RuleExpression<ObjectValue> {
-    return newObject(null);
+    return newObject({hasCall: false});
 }

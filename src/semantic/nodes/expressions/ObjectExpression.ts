@@ -8,11 +8,11 @@ import {PrimitiveValue} from '../../domain/js/PrimitiveValue';
 import {readVariable} from '../../rules/Basic';
 import {toString} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
+import {constant} from '../../rules/expression/RuleNoVarExpresion';
 import {RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
 import {getValue} from '../../rules/Others';
 import {inNewScope, RuleBlockStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../../rules/RuleStatements';
-import {ObjectCreation, ObjectProperty} from '../NodeHelper';
-import {constant} from '../../rules/expression/RuleNoVarExpresion';
+import {ObjectProperty, StandardObjectDescriptor} from '../NodeHelper';
 
 interface PropertyInfo {
     key: TrackOptimizedExpression;
@@ -29,7 +29,7 @@ export function ObjectExpression(node: ObjectExpression): RuleExpression<Complet
         };
     });
     return inNewScope([
-        new RuleLetStatement('object', newObject(new ObjectCreation([]))),
+        new RuleLetStatement('object', newObject(new StandardObjectDescriptor([]))),
         ...properties.map(addProperty),
         new RuleReturn(normalCompletion(readVariable('object')))
     ], () => types.builders.objectExpression(properties.map((property: PropertyInfo) => {
@@ -67,7 +67,10 @@ function addProperty(propInfo: PropertyInfo): RuleStatement { // todo check spec
                         kind: propInfo.property.kind,
                         value
                     };
-                    return new ObjectValue(new ObjectCreation([...(object.payload as ObjectCreation).properties, newProperty]));
+                    return new ObjectValue(new StandardObjectDescriptor([
+                        ...(object.descriptor as StandardObjectDescriptor).properties,
+                        newProperty
+                    ]));
                 }
             ),
             readVariable('object'),

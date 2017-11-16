@@ -75,5 +75,5 @@ export function and(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolea
 }
 
 export function same<T>(x: RuleExpression<T>, y: RuleExpression<T>): RuleExpression<boolean> {
-    return new RuleParamExpression(new SimpleCalculator((l, r) => l === r), x, y);
+    return new RuleParamExpression<boolean, T, T>(new SimpleCalculator((l, r) => l === r), x, y);
 }

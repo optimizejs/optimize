@@ -9,12 +9,12 @@ import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpress
 import {RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
 import {getValue} from '../../rules/Others';
 import {inNewScope, RuleBlockStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../../rules/RuleStatements';
-import {ArrayCreation} from '../NodeHelper';
+import {ArrayDescriptor} from '../NodeHelper';
 
 export function ArrayExpression(node: ArrayExpression): RuleExpression<CompletionRecord> {
     const elements = node.elements.map(element => trackOptimized(toRule(element)));
     return inNewScope([
-        new RuleLetStatement('array', newObject(new ArrayCreation([]))),
+        new RuleLetStatement('array', newObject(new ArrayDescriptor([]))),
         ...elements.map(addElement),
         new RuleReturn(normalCompletion(readVariable('array')))
     ], () => types.builders.arrayExpression(elements.map(element => element.toExpression()))); // TODO
@@ -33,5 +33,5 @@ function addElement(element: RuleExpression<CompletionRecord>): RuleStatement { 
 }
 
 function push(array: ObjectValue, element: JSValue): JSValue {
-    return new ObjectValue(new ArrayCreation([...(array.payload as ArrayCreation).elements, element]));
+    return new ObjectValue(new ArrayDescriptor([...(array.descriptor as ArrayDescriptor).elements, element]));
 }

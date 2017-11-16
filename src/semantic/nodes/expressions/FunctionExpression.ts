@@ -6,7 +6,7 @@ import {newFunction} from '../../domain/js/ObjectValue';
 import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpression';
 import {getValue} from '../../rules/Others';
 import {inNewScope, RuleLetStatement, RuleReturn} from '../../rules/RuleStatements';
-import {FunctionCreation} from '../NodeHelper';
+import {FunctionDescriptor} from '../NodeHelper';
 
 export function FunctionExpression(node: FunctionExpression): RuleExpression<CompletionRecord> {
     const params = node.params.map(param => trackOptimized(toRule(param)));
@@ -25,7 +25,7 @@ export function FunctionExpression(node: FunctionExpression): RuleExpression<Com
     );
 
     return inNewScope([
-        new RuleReturn(normalCompletion(newFunction(new FunctionCreation(ruleExpression, backMapper))))
+        new RuleReturn(normalCompletion(newFunction(new FunctionDescriptor(ruleExpression, backMapper))))
     ], backMapper); // TODO
 }
 
@@ -48,6 +48,6 @@ export function ArrowFunctionExpression(node: ArrowFunctionExpression): RuleExpr
         }
     };
     return inNewScope([
-        new RuleReturn(normalCompletion(newFunction(new FunctionCreation(ruleExpression, backMapper))))
+        new RuleReturn(normalCompletion(newFunction(new FunctionDescriptor(ruleExpression, backMapper))))
     ], backMapper); // TODO
 }

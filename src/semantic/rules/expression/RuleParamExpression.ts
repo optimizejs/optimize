@@ -8,7 +8,7 @@ export interface Calculator<R, A, B, C = void> {
     calculate(a: A, b: B, c: C): R;
 }
 
-export class SimpleCalculator<R, A, B, C = void> implements Calculator<R, A, B, C> {
+export class SimpleCalculator<R, A, B = void, C = void> implements Calculator<R, A, B, C> {
     constructor(readonly calculate: (a: A, b: B, c: C) => R) {
     }
 }
