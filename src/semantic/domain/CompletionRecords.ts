@@ -29,7 +29,7 @@ export class ThrowCompletionRecord extends CompletionRecord {
 }
 
 export class ReturnCompletionRecord extends CompletionRecord {
-    constructor(private value: JSValue) {
+    constructor(readonly value: JSValue) {
         super();
     }
 }
@@ -66,6 +66,13 @@ export function normalCompletion(value: RuleExpression<JSValue | Empty>): RuleEx
 export function throwCompletion(value: RuleExpression<JSValue>): RuleExpression<ThrowCompletionRecord> {
     return new RuleParamExpression<ThrowCompletionRecord, JSValue>(
         new SimpleCalculator(arg => new ThrowCompletionRecord(arg)),
+        value
+    );
+}
+
+export function returnCompletion(value: RuleExpression<JSValue | Empty>): RuleExpression<ReturnCompletionRecord> {
+    return new RuleParamExpression<ReturnCompletionRecord, JSValue>(
+        new SimpleCalculator(arg => new ReturnCompletionRecord(arg)),
         value
     );
 }

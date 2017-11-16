@@ -44,7 +44,7 @@ import {ForStatement} from './semantic/nodes/statements/ForStatement';
 import {FunctionDeclaration} from './semantic/nodes/statements/FunctionDeclaration';
 import {IfStatement} from './semantic/nodes/statements/IfStatement';
 import {LabeledStatement} from './semantic/nodes/statements/LabeledStatement';
-import {ReturnStatement} from './semantic/nodes/statements/ReturnStatement';
+import {createReturnStatement, ReturnStatement} from './semantic/nodes/statements/ReturnStatement';
 import {SwitchCase, SwitchStatement} from './semantic/nodes/statements/SwitchStatement';
 import {createThrowStatement, ThrowStatement} from './semantic/nodes/statements/ThrowStatement';
 import {CatchClause, TryStatement} from './semantic/nodes/statements/TryStatement';
@@ -125,6 +125,7 @@ const expressionMap: MaybeBackMapper<Expression>[] = [
 
 const statementMap: MaybeBackMapper<Statement>[] = [
     createExpressionStatement,
+    createReturnStatement,
     createThrowStatement
 ];
 
