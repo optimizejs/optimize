@@ -5,6 +5,9 @@ import {constant, NoVarExpression} from '../../rules/expression/RuleNoVarExpresi
 import {Optimized} from '../../rules/Optimized';
 import {CompletionRecord} from '../CompletionRecords';
 import {JSValue, Type} from './JSValue';
+import {FunctionCreation} from '../../nodes/NodeHelper';
+
+type ObjectProvider = () => any;
 
 export class ObjectValue extends JSValue {
     objectValue: true;
@@ -19,12 +22,13 @@ export class ObjectValue extends JSValue {
 }
 
 class RuleNewObjectExpression<T> extends NoVarExpression<ObjectValue> {
-    constructor(readonly payload: T) {
+    constructor(readonly provider: ObjectProvider) {
         super();
     }
 
     execute(evaluation: Evaluation): Optimized<RuleExpression<ObjectValue>> {
-        return Optimized.optimized(constant(new ObjectValue(this.payload)));
+        const payload = this.provider();
+        return Optimized.optimized(constant(new ObjectValue(payload)));
     }
 }
 
@@ -59,6 +63,13 @@ export function callGet(obj: RuleExpression<ObjectValue>, property: RuleExpressi
     return new RuleCallGetExpression(obj, property, thisValue);
 }
 
-export function newObject<T>(payload: T): RuleExpression<ObjectValue> {
-    return new RuleNewObjectExpression(payload);
+export function newObject(payload: any): RuleExpression<ObjectValue> {
+    return new RuleNewObjectExpression(() => payload);
+}
+
+export function newFunction(fc: FunctionCreation): RuleExpression<ObjectValue> {
+    return new RuleNewObjectExpression(() => {
+        fc.ruleExpression.execute(new Evaluation(), true);
+        return fc;
+    });
 }

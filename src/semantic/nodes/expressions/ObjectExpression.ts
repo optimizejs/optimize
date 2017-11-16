@@ -61,18 +61,18 @@ function addProperty(propInfo: PropertyInfo): RuleStatement { // todo check spec
         new RuleLetStatement('value', getValue(propInfo.value)),
         returnIfAbrupt('value'),
         new RuleLetStatement('object', new RuleParamExpression(
-            new SimpleCalculator(addProp),
+            new SimpleCalculator((object: ObjectValue, key: PrimitiveValue, value: JSValue): JSValue => {
+                    const newProperty: ObjectProperty = {
+                        key: key.value as string,
+                        kind: propInfo.property.kind,
+                        value
+                    };
+                    return new ObjectValue(new ObjectCreation([...(object.payload as ObjectCreation).properties, newProperty]));
+                }
+            ),
             readVariable('object'),
             readVariable('keyStr'),
             readVariable('value')
         ))
     ]);
-}
-
-function addProp(object: ObjectValue, key: PrimitiveValue, value: JSValue): JSValue {
-    const newProperty: ObjectProperty = {
-        key: key.value as string,
-        value
-    };
-    return new ObjectValue(new ObjectCreation([...(object.payload as ObjectCreation).properties, newProperty]));
 }
