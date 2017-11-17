@@ -1,10 +1,15 @@
 import {BinaryExpression, Expression} from 'estree';
 import {types} from 'recast';
 import {toRule} from '../../../RuleMapper';
-import {CompletionRecord, normalCompletion, returnIfAbrupt} from '../../domain/CompletionRecords';
+import {
+    CompletionRecord,
+    normalCompletion,
+    NormalCompletionRecord,
+    returnIfAbrupt
+} from '../../domain/CompletionRecords';
 import {getType, Type} from '../../domain/js/JSValue';
 import {Prim, PrimExpr, PrimitiveValue} from '../../domain/js/PrimitiveValue';
-import {call, or, readVariable, same} from '../../rules/Basic';
+import {and, call, or, readVariable, same} from '../../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
 import {constant} from '../../rules/expression/RuleNoVarExpresion';
@@ -40,6 +45,11 @@ export function BinaryExpression(node: BinaryExpression): RuleExpression<Complet
         case '===':
         case '!==':
             return EqualityExpression(node);
+        case '<':
+        case '>':
+        case '<=':
+        case '>=':
+            return RelationalExpression(node);
         default:
             return UnsupportedBinaryExpression(node);
     }
@@ -151,7 +161,7 @@ function negate(expression: RuleExpression<CompletionRecord>): RuleExpression<Co
         returnIfAbrupt('param'),
         new RuleReturn(normalCompletion(
             new RuleParamExpression(
-                new SimpleCalculator(p => new PrimitiveValue(!(p as PrimitiveValue).value)),
+                new SimpleCalculator(p => new PrimitiveValue(!(p as PrimitiveValue).value)), // todo duplicate
                 readVariable('param'),
             )
         ))
@@ -168,6 +178,52 @@ function EqualityExpression(node: BinaryExpression): RuleExpression<CompletionRe
     return inNewScope([
         ...paramValues.statements,
         new RuleReturn(result)
+    ], () => {
+        return types.builders.binaryExpression(node.operator, paramValues.left(), paramValues.right());
+    });
+}
+
+const relationalOperators: { [op: string]: (a: primitive, b: primitive) => boolean } = {};
+
+for (const operator of ['<', '>', '<=', '>=']) {
+    relationalOperators[operator] = new Function('a,b', 'return a' + operator + 'b;') as any;
+}
+
+function RelationalExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
+    const paramValues = new ParamValues(node);
+
+    const calculator = new SimpleCalculator((l: PrimitiveValue, r: PrimitiveValue) => {
+        return new NormalCompletionRecord(new PrimitiveValue(relationalOperators[node.operator](l.value, r.value)));
+    });
+
+    return inNewScope([
+        ...paramValues.statements,
+        new RuleLetStatement('lp', toPrimitive(readVariable('leftValue'))),
+        returnIfAbrupt('lp'),
+        new RuleLetStatement('rp', toPrimitive(readVariable('rightValue'))),
+        returnIfAbrupt('rp'),
+        new RuleIfStatement(
+            and(
+                same(getType(readVariable('lp')), constant(Type.STRING)),
+                same(getType(readVariable('rp')), constant(Type.STRING))
+            ),
+            new RuleReturn(new RuleParamExpression(
+                calculator,
+                readVariable('lp'),
+                readVariable('rp')
+            )),
+            new RuleBlockStatement([
+                new RuleLetStatement('ln', toNumber(readVariable('lp'))),
+                returnIfAbrupt('ln'),
+                new RuleLetStatement('rn', toNumber(readVariable('rp'))),
+                returnIfAbrupt('rn'),
+                new RuleReturn(new RuleParamExpression(
+                    calculator,
+                    readVariable('ln'),
+                    readVariable('rn'),
+                ))
+            ])
+        )
     ], () => {
         return types.builders.binaryExpression(node.operator, paramValues.left(), paramValues.right());
     });
