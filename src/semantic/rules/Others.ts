@@ -21,7 +21,7 @@ import {
 import {and, call, readVariable, same} from './Basic';
 import {referenceError} from './BuiltIn';
 import {RuleExpression} from './expression/RuleExpression';
-import {RuleParamExpression, UnknownExpression} from './expression/RuleParamExpression';
+import {calculableExpression, unknownExpression} from './expression/RuleParamExpression';
 import {
     RuleBlockStatement,
     RuleEmptyStatement,
@@ -81,16 +81,16 @@ function strictComparison(x: JSValue, y: JSValue): boolean {
     throw new Error('Object values are not supported');
 }
 
-function primitiveEqualityComparison(left: PrimExpr, right: PrimExpr): RuleParamExpression<Prim, Prim, Prim> {
+function primitiveEqualityComparison(left: PrimExpr, right: PrimExpr): RuleExpression<Prim> {
 
-    return new RuleParamExpression((l, r) => {
+    return calculableExpression((l, r) => {
         /* tslint:disable-next-line */
         return new PrimitiveValue(l.value == r.value);
     }, left, right);
 }
 
 export function strictEquals(x: RuleExpression<JSValue>, y: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new RuleParamExpression<CompletionRecord, JSValue, JSValue>((l, r) => {
+    return calculableExpression<CompletionRecord, JSValue, JSValue>((l, r) => {
         return new NormalCompletionRecord(new PrimitiveValue(strictComparison(l, r)));
     }, x, y);
 }
@@ -102,7 +102,7 @@ const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [
         new RuleIfStatement(
             and(isPrimitive(readVariable('x')), isPrimitive(readVariable('y'))),
             new RuleReturn(normalCompletion(primitiveEqualityComparison(readVariable('x'), readVariable('y')))),
-            new RuleReturn(new UnknownExpression(
+            new RuleReturn(unknownExpression(
                 readVariable('x'),
                 readVariable('y')
             ))

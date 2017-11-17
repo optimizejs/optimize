@@ -1,8 +1,5 @@
 import {RuleExpression} from '../../rules/expression/RuleExpression';
-import {
-    notImplementedCalculator,
-    RuleParamExpression,
-} from '../../rules/expression/RuleParamExpression';
+import {calculableExpression, notImplementedCalculator} from '../../rules/expression/RuleParamExpression';
 import {ObjectValue} from './ObjectValue';
 
 export abstract class JSValue {
@@ -22,9 +19,9 @@ export const enum Type {
 }
 
 export function toObject(value: RuleExpression<JSValue>): RuleExpression<ObjectValue> {
-    return new RuleParamExpression(notImplementedCalculator, value);
+    return calculableExpression(notImplementedCalculator, value);
 }
 
 export function getType(expression: RuleExpression<JSValue>): RuleExpression<Type> {
-    return new RuleParamExpression<Type, JSValue>(value => value.getType(), expression);
+    return calculableExpression<Type, JSValue>(value => value.getType(), expression);
 }

@@ -9,7 +9,7 @@ import {readVariable} from '../../rules/Basic';
 import {toString} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
 import {constant} from '../../rules/expression/RuleNoVarExpresion';
-import {RuleParamExpression} from '../../rules/expression/RuleParamExpression';
+import {calculableExpression} from '../../rules/expression/RuleParamExpression';
 import {getValue} from '../../rules/Others';
 import {inNewScope, RuleBlockStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../../rules/RuleStatements';
 import {ObjectProperty, StandardObjectDescriptor} from '../NodeHelper';
@@ -60,7 +60,7 @@ function addProperty(propInfo: PropertyInfo): RuleStatement { // todo check spec
         returnIfAbrupt('keyStr'),
         new RuleLetStatement('value', getValue(propInfo.value)),
         returnIfAbrupt('value'),
-        new RuleLetStatement('object', new RuleParamExpression(
+        new RuleLetStatement('object', calculableExpression(
             (object: ObjectValue, key: PrimitiveValue, value: JSValue): JSValue => {
                 const newProperty: ObjectProperty = {
                     key: key.value as string,

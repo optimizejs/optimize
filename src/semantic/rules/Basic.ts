@@ -3,7 +3,7 @@ import {Evaluation} from './Evaluation';
 import {VariableVisitor} from './Executable';
 import {BackMapper, RuleExpression} from './expression/RuleExpression';
 import {RuleConstantExpression} from './expression/RuleNoVarExpresion';
-import {RuleParamExpression} from './expression/RuleParamExpression';
+import {calculableExpression} from './expression/RuleParamExpression';
 import {Optimized} from './Optimized';
 import {RuleFunction, RuleReturn} from './RuleStatements';
 
@@ -67,13 +67,13 @@ export function readVariable(variable: string): RuleExpression<any> {
 }
 
 export function or(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
-    return new RuleParamExpression((a, b) => a || b, expr1, expr2);
+    return calculableExpression((a, b) => a || b, expr1, expr2);
 }
 
 export function and(expr1: RuleExpression<boolean>, expr2: RuleExpression<boolean>): RuleExpression<boolean> {
-    return new RuleParamExpression((a, b) => a && b, expr1, expr2);
+    return calculableExpression((a, b) => a && b, expr1, expr2);
 }
 
 export function same<T>(x: RuleExpression<T>, y: RuleExpression<T>): RuleExpression<boolean> {
-    return new RuleParamExpression<boolean, T, T>((l, r) => l === r, x, y);
+    return calculableExpression<boolean, T, T>((l, r) => l === r, x, y);
 }

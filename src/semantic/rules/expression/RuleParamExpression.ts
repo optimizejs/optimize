@@ -6,10 +6,11 @@ import {constant, RuleConstantExpression} from './RuleNoVarExpresion';
 
 export type Calculator<R, A, B, C = void> = (a: A, b: B, c: C) => R;
 
-export abstract class RuleAbstractParamExpression<R, A, B = void, C = void> extends RuleExpression<R> {
+class RuleAbstractParamExpression<R, A, B = void, C = void> extends RuleExpression<R> {
     readonly params: RuleExpression<any>[] = [];
 
-    constructor(private a?: RuleExpression<A>, private b?: RuleExpression<B>, private c?: RuleExpression<C>) {
+    constructor(private calculate: Calculator<Optimized<RuleExpression<R>> | null, A, B, C>,
+                private a?: RuleExpression<A>, private b?: RuleExpression<B>, private c?: RuleExpression<C>) {
         super();
         this.push(a);
         this.push(b);
@@ -23,12 +24,13 @@ export abstract class RuleAbstractParamExpression<R, A, B = void, C = void> exte
 
         if (parts.findIndex(p => !(p instanceof RuleConstantExpression)) === -1) {
             const values = parts.map(p => (p as RuleConstantExpression<any>).value);
-            return this.calculate(...values);
+            const result = (this.calculate as () => Optimized<RuleExpression<R>>)(...values);
+            return result ? result : Optimized.original(this);
         }
         return Optimized.wrapIfOptimized(
             optimized,
             this,
-            () => this.copy(...parts)
+            () => new RuleAbstractParamExpression(this.calculate, ...parts)
         );
     }
 
@@ -38,11 +40,6 @@ export abstract class RuleAbstractParamExpression<R, A, B = void, C = void> exte
         }
     }
 
-    protected abstract calculate(a?: A, b?: B, c?: C): Optimized<RuleExpression<R>>;
-
-    protected abstract copy(a?: RuleExpression<A>, b?: RuleExpression<B>,
-                            c?: RuleExpression<C>): RuleAbstractParamExpression<R, A, B, C>;
-
     private push(a?: RuleExpression<any>): void {
         if (a) {
             this.params.push(a);
@@ -50,31 +47,27 @@ export abstract class RuleAbstractParamExpression<R, A, B = void, C = void> exte
     }
 }
 
-export class UnknownExpression<T> extends RuleAbstractParamExpression<any, any, any, T> {
-    protected calculate(a: any, b: any, c: any): Optimized<RuleExpression<T>> {
-        return Optimized.original(this);
-    }
+const UNKNOWN_EXPRESSION: RuleExpression<any> =
+    new RuleAbstractParamExpression(() => Optimized.original(UNKNOWN_EXPRESSION));
 
-    protected copy(a: RuleExpression<any>, b: RuleExpression<any>,
-                   c: RuleExpression<any>): RuleAbstractParamExpression<any, any, any, T> {
-        return new UnknownExpression(a, b, c);
-    }
+export function unknownExpression<R, A, B = void, C = void>(a: RuleExpression<A>, b?: RuleExpression<B>,
+                                                            c?: RuleExpression<C>): RuleExpression<R> {
+    return UNKNOWN_EXPRESSION;
 }
 
-export class RuleParamExpression<R, A, B = void, C = void> extends RuleAbstractParamExpression<R, A, B, C> {
-    constructor(readonly calculator: Calculator<R, A, B, C>, a: RuleExpression<A>, b?: RuleExpression<B>,
-                c?: RuleExpression<C>) {
-        super(a, b, c);
-    }
+export function maybeCalculableExpression<R, A, B, C>(calc: Calculator<Optimized<RuleExpression<R>> | null, A, B, C>,
+                                                      a: RuleExpression<A>, b?: RuleExpression<B>,
+                                                      c?: RuleExpression<C>): RuleExpression<R> {
+    return new RuleAbstractParamExpression<R, A, B, C>(calc, a, b, c);
+}
 
-    protected calculate(a: A, b: B, c: C): Optimized<RuleExpression<R>> {
-        return Optimized.optimized(constant(this.calculator(a, b, c)));
-    }
+export function calculableExpression<R, A, B = void, C = void>(calculator: Calculator<R, A, B, C>, a: RuleExpression<A>,
+                                                               b?: RuleExpression<B>,
+                                                               c?: RuleExpression<C>): RuleExpression<R> {
 
-    protected copy(a: RuleExpression<A>, b: RuleExpression<B>,
-                   c: RuleExpression<C>): RuleAbstractParamExpression<R, A, B, C> {
-        return new RuleParamExpression(this.calculator, a, b, c);
-    }
+    return new RuleAbstractParamExpression((aVal: A, bVal: B, cVal: C) => {
+        return Optimized.optimized(constant(calculator(aVal, bVal, cVal)));
+    }, a, b, c);
 }
 
 export const notImplementedCalculator = () => {

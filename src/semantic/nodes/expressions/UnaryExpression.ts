@@ -9,7 +9,7 @@ import {readVariable} from '../../rules/Basic';
 import {toBoolean, toNumber} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
 import {constant} from '../../rules/expression/RuleNoVarExpresion';
-import {RuleParamExpression} from '../../rules/expression/RuleParamExpression';
+import {calculableExpression} from '../../rules/expression/RuleParamExpression';
 import {getValue} from '../../rules/Others';
 import {inNewScope, RuleLetStatement, RuleReturn} from '../../rules/RuleStatements';
 
@@ -62,7 +62,7 @@ function TypeofExpression(node: UnaryExpression): RuleExpression<CompletionRecor
     return inNewScope([
         new RuleLetStatement('val', getValue(argument)),
         returnIfAbrupt('val'),
-        new RuleReturn(normalCompletion(new RuleParamExpression(typeofCalculator, readVariable('val'))))
+        new RuleReturn(normalCompletion(calculableExpression(typeofCalculator, readVariable('val'))))
     ], backMapper(node, argument));
 }
 
@@ -86,7 +86,7 @@ function MinusExpression(node: UnaryExpression): RuleExpression<CompletionRecord
         returnIfAbrupt('val'),
         new RuleLetStatement('num', toNumber(readVariable('val'))),
         returnIfAbrupt('num'),
-        new RuleReturn(normalCompletion(new RuleParamExpression(
+        new RuleReturn(normalCompletion(calculableExpression(
             minusCalculator,
             readVariable('num')
         )))
@@ -103,7 +103,7 @@ function NegateExpression(node: UnaryExpression): RuleExpression<CompletionRecor
         returnIfAbrupt('val'),
         new RuleLetStatement('bool', toBoolean(readVariable('val'))),
         returnIfAbrupt('bool'),
-        new RuleReturn(normalCompletion(new RuleParamExpression(
+        new RuleReturn(normalCompletion(calculableExpression(
             negateCalculator,
             readVariable('bool')
         )))
@@ -121,7 +121,7 @@ function BitwiseNotExpression(node: UnaryExpression): RuleExpression<CompletionR
         returnIfAbrupt('val'),
         new RuleLetStatement('num', toNumber(readVariable('val'))),
         returnIfAbrupt('num'),
-        new RuleReturn(normalCompletion(new RuleParamExpression(
+        new RuleReturn(normalCompletion(calculableExpression(
             bitwiseNotCalculator,
             readVariable('num')
         )))

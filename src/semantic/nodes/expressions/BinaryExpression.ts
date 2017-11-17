@@ -13,7 +13,7 @@ import {and, call, or, readVariable, same} from '../../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
 import {constant} from '../../rules/expression/RuleNoVarExpresion';
-import {Calculator, RuleParamExpression} from '../../rules/expression/RuleParamExpression';
+import {calculableExpression} from '../../rules/expression/RuleParamExpression';
 import {equals, getValue, strictEquals} from '../../rules/Others';
 import {
     inNewScope,
@@ -63,8 +63,8 @@ function jsBinaryCalculator(operator: string): (l: PrimitiveValue, r: PrimitiveV
     };
 }
 
-function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleParamExpression<Prim, Prim, Prim> {
-    return new RuleParamExpression(jsBinaryCalculator(operator), l, r);
+function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleExpression<Prim> {
+    return calculableExpression(jsBinaryCalculator(operator), l, r);
 }
 
 class ParamValues {
@@ -156,7 +156,7 @@ function negate(expression: RuleExpression<CompletionRecord>): RuleExpression<Co
     return call(new RuleFunction(['param'], [
         returnIfAbrupt('param'),
         new RuleReturn(normalCompletion(
-            new RuleParamExpression(
+            calculableExpression(
                 p => new PrimitiveValue(!(p as PrimitiveValue).value), // todo duplicate
                 readVariable('param'),
             )
@@ -203,7 +203,7 @@ function RelationalExpression(node: BinaryExpression): RuleExpression<Completion
                 same(getType(readVariable('lp')), constant(Type.STRING)),
                 same(getType(readVariable('rp')), constant(Type.STRING))
             ),
-            new RuleReturn(new RuleParamExpression(
+            new RuleReturn(calculableExpression(
                 calculator,
                 readVariable('lp'),
                 readVariable('rp')
@@ -213,7 +213,7 @@ function RelationalExpression(node: BinaryExpression): RuleExpression<Completion
                 returnIfAbrupt('ln'),
                 new RuleLetStatement('rn', toNumber(readVariable('rp'))),
                 returnIfAbrupt('rn'),
-                new RuleReturn(new RuleParamExpression(
+                new RuleReturn(calculableExpression(
                     calculator,
                     readVariable('ln'),
                     readVariable('rn'),
