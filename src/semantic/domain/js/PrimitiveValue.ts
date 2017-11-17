@@ -1,5 +1,5 @@
 import {RuleExpression} from '../../rules/expression/RuleExpression';
-import {RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
+import {RuleParamExpression} from '../../rules/expression/RuleParamExpression';
 import {JSValue, Type} from './JSValue';
 
 export class PrimitiveValue extends JSValue {
@@ -30,12 +30,9 @@ export type Prim = PrimitiveValue;
 export type PrimExpr = RuleExpression<Prim>;
 
 export function isPrimitive(value: RuleExpression<JSValue>): RuleExpression<boolean> {
-    return new RuleParamExpression(new SimpleCalculator(arg => arg instanceof PrimitiveValue), value);
+    return new RuleParamExpression(arg => arg instanceof PrimitiveValue, value);
 }
 
 export function is(value: RuleExpression<PrimitiveValue>, target: primitive): RuleExpression<boolean> {
-    return new RuleParamExpression<boolean, PrimitiveValue>(
-        new SimpleCalculator(arg => arg.value === target),
-        value
-    );
+    return new RuleParamExpression<boolean, PrimitiveValue>(arg => arg.value === target, value);
 }

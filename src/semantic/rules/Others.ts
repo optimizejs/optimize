@@ -21,7 +21,7 @@ import {
 import {and, call, readVariable, same} from './Basic';
 import {referenceError} from './BuiltIn';
 import {RuleExpression} from './expression/RuleExpression';
-import {RuleParamExpression, SimpleCalculator, UnknownExpression} from './expression/RuleParamExpression';
+import {RuleParamExpression, UnknownExpression} from './expression/RuleParamExpression';
 import {
     RuleBlockStatement,
     RuleEmptyStatement,
@@ -83,16 +83,16 @@ function strictComparison(x: JSValue, y: JSValue): boolean {
 
 function primitiveEqualityComparison(left: PrimExpr, right: PrimExpr): RuleParamExpression<Prim, Prim, Prim> {
 
-    return new RuleParamExpression(new SimpleCalculator((l, r) => {
+    return new RuleParamExpression((l, r) => {
         /* tslint:disable-next-line */
         return new PrimitiveValue(l.value == r.value);
-    }), left, right);
+    }, left, right);
 }
 
 export function strictEquals(x: RuleExpression<JSValue>, y: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new RuleParamExpression<CompletionRecord, JSValue, JSValue>(new SimpleCalculator((l, r) => {
+    return new RuleParamExpression<CompletionRecord, JSValue, JSValue>((l, r) => {
         return new NormalCompletionRecord(new PrimitiveValue(strictComparison(l, r)));
-    }), x, y);
+    }, x, y);
 }
 
 const EQUALITY_COMPARISON = new RuleFunction(['x', 'y'], [

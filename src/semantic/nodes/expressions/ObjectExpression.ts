@@ -9,7 +9,7 @@ import {readVariable} from '../../rules/Basic';
 import {toString} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
 import {constant} from '../../rules/expression/RuleNoVarExpresion';
-import {RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
+import {RuleParamExpression} from '../../rules/expression/RuleParamExpression';
 import {getValue} from '../../rules/Others';
 import {inNewScope, RuleBlockStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../../rules/RuleStatements';
 import {ObjectProperty, StandardObjectDescriptor} from '../NodeHelper';
@@ -61,18 +61,17 @@ function addProperty(propInfo: PropertyInfo): RuleStatement { // todo check spec
         new RuleLetStatement('value', getValue(propInfo.value)),
         returnIfAbrupt('value'),
         new RuleLetStatement('object', new RuleParamExpression(
-            new SimpleCalculator((object: ObjectValue, key: PrimitiveValue, value: JSValue): JSValue => {
-                    const newProperty: ObjectProperty = {
-                        key: key.value as string,
-                        kind: propInfo.property.kind,
-                        value
-                    };
-                    return new ObjectValue(new StandardObjectDescriptor([
-                        ...(object.descriptor as StandardObjectDescriptor).properties,
-                        newProperty
-                    ]));
-                }
-            ),
+            (object: ObjectValue, key: PrimitiveValue, value: JSValue): JSValue => {
+                const newProperty: ObjectProperty = {
+                    key: key.value as string,
+                    kind: propInfo.property.kind,
+                    value
+                };
+                return new ObjectValue(new StandardObjectDescriptor([
+                    ...(object.descriptor as StandardObjectDescriptor).properties,
+                    newProperty
+                ]));
+            },
             readVariable('object'),
             readVariable('keyStr'),
             readVariable('value')

@@ -1,5 +1,5 @@
 import {RuleExpression} from '../rules/expression/RuleExpression';
-import {notImplementedCalculator, RuleParamExpression, SimpleCalculator} from '../rules/expression/RuleParamExpression';
+import {notImplementedCalculator, RuleParamExpression} from '../rules/expression/RuleParamExpression';
 import {JSValue} from './js/JSValue';
 import {ObjectValue} from './js/ObjectValue';
 
@@ -8,7 +8,7 @@ export class Reference {
 }
 
 export function isReference(value: RuleExpression<any>): RuleExpression<boolean> {
-    return new RuleParamExpression(new SimpleCalculator(arg => arg instanceof Reference), value);
+    return new RuleParamExpression(arg => arg instanceof Reference, value);
 }
 
 export function getBase(value: RuleExpression<Reference>): RuleExpression<JSValue> {

@@ -13,7 +13,7 @@ import {and, call, or, readVariable, same} from '../../rules/Basic';
 import {toNumber, toPrimitive, toString} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
 import {constant} from '../../rules/expression/RuleNoVarExpresion';
-import {Calculator, RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
+import {Calculator, RuleParamExpression} from '../../rules/expression/RuleParamExpression';
 import {equals, getValue, strictEquals} from '../../rules/Others';
 import {
     inNewScope,
@@ -55,20 +55,16 @@ export function BinaryExpression(node: BinaryExpression): RuleExpression<Complet
     }
 }
 
-class JSBinaryCalculator implements Calculator<PrimitiveValue, PrimitiveValue, PrimitiveValue> {
-    private readonly evaluator: (a: primitive, b: primitive) => primitive;
+function jsBinaryCalculator(operator: string): (l: PrimitiveValue, r: PrimitiveValue) => PrimitiveValue {
+    const evaluator = new Function('a,b', 'return a ' + operator + ' b;') as any;
 
-    constructor(readonly operator: string) {
-        this.evaluator = new Function('a,b', 'return a ' + operator + ' b;') as any;
-    }
-
-    calculate(left: PrimitiveValue, right: PrimitiveValue): PrimitiveValue {
-        return new PrimitiveValue(this.evaluator(left.value, right.value));
-    }
+    return (left: PrimitiveValue, right: PrimitiveValue): PrimitiveValue => {
+        return new PrimitiveValue(evaluator(left.value, right.value));
+    };
 }
 
 function jsBinary(operator: string, l: PrimExpr, r: PrimExpr): RuleParamExpression<Prim, Prim, Prim> {
-    return new RuleParamExpression(new JSBinaryCalculator(operator), l, r);
+    return new RuleParamExpression(jsBinaryCalculator(operator), l, r);
 }
 
 class ParamValues {
@@ -161,7 +157,7 @@ function negate(expression: RuleExpression<CompletionRecord>): RuleExpression<Co
         returnIfAbrupt('param'),
         new RuleReturn(normalCompletion(
             new RuleParamExpression(
-                new SimpleCalculator(p => new PrimitiveValue(!(p as PrimitiveValue).value)), // todo duplicate
+                p => new PrimitiveValue(!(p as PrimitiveValue).value), // todo duplicate
                 readVariable('param'),
             )
         ))
@@ -192,9 +188,9 @@ for (const operator of ['<', '>', '<=', '>=']) {
 function RelationalExpression(node: BinaryExpression): RuleExpression<CompletionRecord> {
     const paramValues = new ParamValues(node);
 
-    const calculator = new SimpleCalculator((l: PrimitiveValue, r: PrimitiveValue) => {
+    const calculator = (l: PrimitiveValue, r: PrimitiveValue) => {
         return new NormalCompletionRecord(new PrimitiveValue(relationalOperators[node.operator](l.value, r.value)));
-    });
+    };
 
     return inNewScope([
         ...paramValues.statements,

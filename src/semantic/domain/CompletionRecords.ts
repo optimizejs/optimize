@@ -1,7 +1,7 @@
 import {readVariable} from '../rules/Basic';
 import {RuleExpression} from '../rules/expression/RuleExpression';
 import {constant} from '../rules/expression/RuleNoVarExpresion';
-import {RuleParamExpression, SimpleCalculator} from '../rules/expression/RuleParamExpression';
+import {RuleParamExpression} from '../rules/expression/RuleParamExpression';
 import {RuleIfStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../rules/RuleStatements';
 import {JSValue} from './js/JSValue';
 import {Label} from './Label';
@@ -49,36 +49,30 @@ export class ContinueCompletionRecord extends CompletionRecord {
 export const EMPTY_COMPLETION = normalCompletion(constant(EMPTY));
 
 export function isAbrupt(cr: RuleExpression<CompletionRecord>): RuleExpression<boolean> {
-    return new RuleParamExpression(new SimpleCalculator(arg => !(arg instanceof NormalCompletionRecord)), cr);
+    return new RuleParamExpression(arg => !(arg instanceof NormalCompletionRecord), cr);
 }
 
 export function getNormalValue(cr: RuleExpression<CompletionRecord>): RuleExpression<JSValue | Empty> {
-    return new RuleParamExpression(new SimpleCalculator(arg => (arg as NormalCompletionRecord).value), cr);
+    return new RuleParamExpression(arg => (arg as NormalCompletionRecord).value, cr);
 }
 
 export function normalCompletion(value: RuleExpression<JSValue | Empty>): RuleExpression<NormalCompletionRecord> {
     return new RuleParamExpression<NormalCompletionRecord, JSValue | Empty>(
-        new SimpleCalculator(arg => new NormalCompletionRecord(arg)),
+        arg => new NormalCompletionRecord(arg),
         value
     );
 }
 
 export function throwCompletion(value: RuleExpression<JSValue>): RuleExpression<ThrowCompletionRecord> {
-    return new RuleParamExpression<ThrowCompletionRecord, JSValue>(
-        new SimpleCalculator(arg => new ThrowCompletionRecord(arg)),
-        value
-    );
+    return new RuleParamExpression<ThrowCompletionRecord, JSValue>(arg => new ThrowCompletionRecord(arg), value);
 }
 
 export function returnCompletion(value: RuleExpression<JSValue | Empty>): RuleExpression<ReturnCompletionRecord> {
-    return new RuleParamExpression<ReturnCompletionRecord, JSValue>(
-        new SimpleCalculator(arg => new ReturnCompletionRecord(arg)),
-        value
-    );
+    return new RuleParamExpression<ReturnCompletionRecord, JSValue>(arg => new ReturnCompletionRecord(arg), value);
 }
 
 export function isEmptyValue(value: RuleExpression<JSValue | Empty>): RuleExpression<boolean> {
-    return new RuleParamExpression(new SimpleCalculator(arg => arg === EMPTY), value);
+    return new RuleParamExpression(arg => arg === EMPTY, value);
 }
 
 export function returnIfAbrupt(variableName: string): RuleStatement {

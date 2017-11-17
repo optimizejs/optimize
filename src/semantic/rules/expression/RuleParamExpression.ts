@@ -4,14 +4,7 @@ import {Optimized} from '../Optimized';
 import {RuleExpression} from './RuleExpression';
 import {constant, RuleConstantExpression} from './RuleNoVarExpresion';
 
-export interface Calculator<R, A, B, C = void> {
-    calculate(a: A, b: B, c: C): R;
-}
-
-export class SimpleCalculator<R, A, B = void, C = void> implements Calculator<R, A, B, C> {
-    constructor(readonly calculate: (a: A, b: B, c: C) => R) {
-    }
-}
+export type Calculator<R, A, B, C = void> = (a: A, b: B, c: C) => R;
 
 export abstract class RuleAbstractParamExpression<R, A, B = void, C = void> extends RuleExpression<R> {
     readonly params: RuleExpression<any>[] = [];
@@ -75,7 +68,7 @@ export class RuleParamExpression<R, A, B = void, C = void> extends RuleAbstractP
     }
 
     protected calculate(a: A, b: B, c: C): Optimized<RuleExpression<R>> {
-        return Optimized.optimized(constant(this.calculator.calculate(a, b, c)));
+        return Optimized.optimized(constant(this.calculator(a, b, c)));
     }
 
     protected copy(a: RuleExpression<A>, b: RuleExpression<B>,
@@ -84,6 +77,6 @@ export class RuleParamExpression<R, A, B = void, C = void> extends RuleAbstractP
     }
 }
 
-export const notImplementedCalculator = new SimpleCalculator(() => {
+export const notImplementedCalculator = () => {
     throw new Error('Not implemented!');
-});
+};

@@ -6,7 +6,7 @@ import {JSValue} from '../../domain/js/JSValue';
 import {newObject, ObjectValue} from '../../domain/js/ObjectValue';
 import {readVariable} from '../../rules/Basic';
 import {RuleExpression, trackOptimized} from '../../rules/expression/RuleExpression';
-import {RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
+import {RuleParamExpression} from '../../rules/expression/RuleParamExpression';
 import {getValue} from '../../rules/Others';
 import {inNewScope, RuleBlockStatement, RuleLetStatement, RuleReturn, RuleStatement} from '../../rules/RuleStatements';
 import {ArrayDescriptor} from '../NodeHelper';
@@ -25,7 +25,7 @@ function addElement(element: RuleExpression<CompletionRecord>): RuleStatement { 
         new RuleLetStatement('value', getValue(element)),
         returnIfAbrupt('value'),
         new RuleLetStatement('array', new RuleParamExpression(
-            new SimpleCalculator(push),
+            push,
             readVariable('array'),
             readVariable('value')
         ))

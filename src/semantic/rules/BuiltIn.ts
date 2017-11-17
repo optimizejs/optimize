@@ -4,7 +4,7 @@ import {newObject, ObjectValue} from '../domain/js/ObjectValue';
 import {PrimitiveValue} from '../domain/js/PrimitiveValue';
 import {RuleExpression} from './expression/RuleExpression';
 import {constant} from './expression/RuleNoVarExpresion';
-import {RuleAbstractParamExpression, RuleParamExpression, SimpleCalculator} from './expression/RuleParamExpression';
+import {RuleAbstractParamExpression, RuleParamExpression} from './expression/RuleParamExpression';
 import {Optimized} from './Optimized';
 
 class ToNumberExpression extends RuleAbstractParamExpression<CompletionRecord, JSValue> {
@@ -55,7 +55,7 @@ export function toNumber(argument: RuleExpression<JSValue>): RuleExpression<Comp
 }
 
 export function toBoolean(param: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {
-    return new RuleParamExpression(new SimpleCalculator(arg => {
+    return new RuleParamExpression(arg => {
         let result;
         if (arg instanceof PrimitiveValue) {
             result = !!(arg.value as any);
@@ -63,7 +63,7 @@ export function toBoolean(param: RuleExpression<JSValue>): RuleExpression<Comple
             result = true;
         }
         return new NormalCompletionRecord(new PrimitiveValue(result));
-    }), param);
+    }, param);
 }
 
 export function toPrimitive(argument: RuleExpression<JSValue>): RuleExpression<CompletionRecord> {

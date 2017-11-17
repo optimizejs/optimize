@@ -2,7 +2,6 @@ import {RuleExpression} from '../../rules/expression/RuleExpression';
 import {
     notImplementedCalculator,
     RuleParamExpression,
-    SimpleCalculator
 } from '../../rules/expression/RuleParamExpression';
 import {ObjectValue} from './ObjectValue';
 
@@ -27,5 +26,5 @@ export function toObject(value: RuleExpression<JSValue>): RuleExpression<ObjectV
 }
 
 export function getType(expression: RuleExpression<JSValue>): RuleExpression<Type> {
-    return new RuleParamExpression<Type, JSValue>(new SimpleCalculator(value => value.getType()), expression);
+    return new RuleParamExpression<Type, JSValue>(value => value.getType(), expression);
 }

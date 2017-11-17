@@ -9,7 +9,7 @@ import {readVariable} from '../../rules/Basic';
 import {toBoolean, toNumber} from '../../rules/BuiltIn';
 import {RuleExpression, trackOptimized, TrackOptimizedExpression} from '../../rules/expression/RuleExpression';
 import {constant} from '../../rules/expression/RuleNoVarExpresion';
-import {RuleParamExpression, SimpleCalculator} from '../../rules/expression/RuleParamExpression';
+import {RuleParamExpression} from '../../rules/expression/RuleParamExpression';
 import {getValue} from '../../rules/Others';
 import {inNewScope, RuleLetStatement, RuleReturn} from '../../rules/RuleStatements';
 
@@ -52,9 +52,9 @@ function getTypeof(value: JSValue): string {
     return (value as ObjectValue).descriptor.hasCall ? 'function' : 'object';
 }
 
-const typeofCalculator = new SimpleCalculator((value: JSValue) => {
+const typeofCalculator = (value: JSValue) => {
     return new PrimitiveValue(getTypeof(value));
-});
+};
 
 function TypeofExpression(node: UnaryExpression): RuleExpression<CompletionRecord> {
     const argument = trackOptimized(toRule(node.argument));
@@ -132,8 +132,8 @@ function backMapper(node: UnaryExpression, argument: TrackOptimizedExpression): 
     return () => types.builders.unaryExpression(node.operator, argument.toExpression());
 }
 
-function primitiveCalculator(mapper: (p: primitive) => primitive): SimpleCalculator<JSValue, PrimitiveValue> {
-    return new SimpleCalculator<JSValue, PrimitiveValue>((value: JSValue) => {
+function primitiveCalculator(mapper: (p: primitive) => primitive): (val: PrimitiveValue) => PrimitiveValue {
+    return (value: JSValue) => {
         return new PrimitiveValue(mapper((value as PrimitiveValue).value));
-    });
+    };
 }
